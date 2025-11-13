@@ -1,0 +1,76 @@
+# Umbrella chart for MLflow training infrastructure
+# This combines PostgreSQL and MLflow into a single deployment
+
+# Global namespace for all components
+namespace: recsys-training
+
+# PostgreSQL configuration
+postgres:
+  enabled: true
+  
+  # Override postgres chart values
+  database: mlflow
+  username: mlflow
+  password: thanhphat192001  # TODO: Change this!
+  
+  service:
+    port: 5432
+  
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  # CRITICAL: Persistent storage configuration
+  persistence:
+    enabled: true
+    storageClass: "standard-rwo"  # GKE default (HDD)
+    size: 10Gi
+    # Retain keeps the disk even after 'helm uninstall'
+    reclaimPolicy: Retain
+
+# MLflow configuration
+mlflow:
+  enabled: true
+  
+  service:
+    port: 5000
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  
+  # PostgreSQL connection (matches postgres config above)
+  postgres:
+    host: "recsys-training-postgres"  # Will resolve to: {release-name}-postgres
+    port: 5432
+    database: "mlflow"
+    username: "mlflow"
+    password: "thanhphat192001"   # TODO: Change this!
+  
+  # GCS artifact storage
+  gcs:
+    # TODO: Update with your bucket from: terraform output gcs_bucket
+    bucket: "product-recsys-mlops-recsys-data"
+    artifactPath: "mlflow-artifacts"
+  
+  # Workload Identity for GCS access
+  serviceAccount:
+    create: true
+    name: mlflow-sa
+    annotations:
+      # TODO: Setup after deployment (see DEPLOYMENT_GUIDE.md)
+      iam.gke.io/gcp-service-account: ""
+  
+  # Ingress (optional - for team access)
+  ingress:
+    enabled: false
+    className: "nginx"
+    host: "mlflow.recsys.internal"

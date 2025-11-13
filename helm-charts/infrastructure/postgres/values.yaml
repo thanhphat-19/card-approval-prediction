@@ -1,0 +1,41 @@
+# PostgreSQL Configuration
+image:
+  repository: postgres
+  tag: "15-alpine"
+  pullPolicy: IfNotPresent
+
+# Database credentials
+database: mlflow
+username: mlflow
+password: mlflow_password_change_me  # TODO: Use Kubernetes Secret in production
+
+service:
+  type: ClusterIP
+  port: 5432
+
+# Resource limits
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# Persistent storage - CRITICAL for data retention
+persistence:
+  enabled: true
+  # GKE storage classes:
+  # - standard-rwo: Standard persistent disk (HDD) - cheaper
+  # - premium-rwo: SSD persistent disk - faster
+  storageClass: "standard-rwo"
+  size: 10Gi
+  # Retain policy keeps disk even after helm uninstall
+  # Options: Retain, Delete
+  reclaimPolicy: Retain
+  
+  # Backup configuration
+  backup:
+    enabled: false  # Enable for production
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    gcsBucket: ""  # GCS bucket for backups

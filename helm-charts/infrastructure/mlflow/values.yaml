@@ -1,0 +1,52 @@
+# MLflow Configuration
+image:
+  repository: ghcr.io/mlflow/mlflow
+  tag: "v2.9.2"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 5000
+
+# Resource limits
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "1Gi"
+    cpu: "1000m"
+
+# PostgreSQL backend configuration
+postgres:
+  # Connection details - should match postgres chart release name
+  host: "postgres"  # Will be: postgres.<namespace>.svc.cluster.local
+  port: 5432
+  database: "mlflow"
+  username: "mlflow"
+  password: "mlflow_password_change_me"
+
+# GCS artifact storage
+gcs:
+  # IMPORTANT: Update with your actual bucket name from terraform output
+  bucket: "YOUR_PROJECT_ID-recsys-data"
+  # Artifact path within bucket
+  artifactPath: "mlflow-artifacts"
+
+# Workload Identity for GCS access
+serviceAccount:
+  create: true
+  name: mlflow-sa
+  annotations:
+    # TODO: Update after creating GCP service account
+    # Format: iam.gke.io/gcp-service-account: mlflow-gcs@PROJECT_ID.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: ""
+
+# Ingress configuration (optional - for team access)
+ingress:
+  enabled: false
+  className: "nginx"
+  host: "mlflow.recsys.internal"
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod

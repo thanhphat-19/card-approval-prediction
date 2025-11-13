@@ -1,0 +1,9 @@
+apiVersion: v2
+name: postgres
+description: PostgreSQL database with persistent storage
+type: application
+version: 0.1.0
+appVersion: "15"
+
+maintainers:
+  - name: prod-recsys-team
