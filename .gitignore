@@ -205,3 +205,27 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+
+# Terraform files
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Variable files with sensitive data
+terraform.tfvars
+*.tfvars
+!terraform.tfvars.example
+
+# Service account keys
+*.json
+
+# Backup files
+*.backup
+*~
+
+# Crash logs
+crash.log
+docs
