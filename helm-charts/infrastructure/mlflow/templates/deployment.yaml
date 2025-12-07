@@ -30,12 +30,14 @@ spec:
         - /bin/bash
         - -c
         - |
-          pip install --no-cache-dir psycopg2-binary && \
+          pip install --no-cache-dir psycopg2-binary google-cloud-storage && \
           mlflow server \
             --host 0.0.0.0 \
             --port 5000 \
             --backend-store-uri postgresql://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@{{ .Values.postgres.host }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgres.port }}/{{ .Values.postgres.database }} \
-            --default-artifact-root gs://{{ .Values.gcs.bucket }}/{{ .Values.gcs.artifactPath }}/
+            --default-artifact-root gs://{{ .Values.gcs.bucket }}/{{ .Values.gcs.artifactPath }}/ \
+            --serve-artifacts \
+            --artifacts-destination gs://{{ .Values.gcs.bucket }}/{{ .Values.gcs.artifactPath }}/
         ports:
         - name: http
           containerPort: 5000

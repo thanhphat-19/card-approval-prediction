@@ -40,3 +40,9 @@ output "docker_push_example" {
   description = "Example docker push command"
   value       = "docker push ${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.docker_repo.repository_id}/recsys-api:latest"
 }
+
+# MLflow Service Account
+output "mlflow_gcp_service_account" {
+  description = "MLflow GCP service account email for Workload Identity"
+  value       = google_service_account.mlflow.email
+}

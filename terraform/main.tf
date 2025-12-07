@@ -60,3 +60,29 @@ resource "google_artifact_registry_repository" "docker_repo" {
   format        = "DOCKER"
   description   = "Docker images for recommendation system"
 }
+
+# ============================================
+# MLflow Service Account & Workload Identity
+# ============================================
+
+# GCP Service Account for MLflow
+resource "google_service_account" "mlflow" {
+  account_id   = "mlflow-gcs"
+  display_name = "MLflow GCS Access"
+  description  = "Service account for MLflow to access GCS artifacts"
+}
+
+# Grant Storage Object Admin on the GCS bucket
+resource "google_storage_bucket_iam_member" "mlflow_storage_admin" {
+  bucket = google_storage_bucket.data.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.mlflow.email}"
+}
+
+# Workload Identity binding: Link K8s SA to GCP SA
+# This allows the Kubernetes service account to impersonate the GCP service account
+resource "google_service_account_iam_member" "mlflow_workload_identity" {
+  service_account_id = google_service_account.mlflow.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[recsys-training/mlflow-sa]"
+}

@@ -1,8 +1,9 @@
 # MLflow Configuration
 image:
   repository: ghcr.io/mlflow/mlflow
-  tag: "v2.9.2"
+  tag: "v3.6.0"
   pullPolicy: IfNotPresent
+
 
 service:
   type: ClusterIP
@@ -28,8 +29,8 @@ postgres:
 
 # GCS artifact storage
 gcs:
-  # IMPORTANT: Update with your actual bucket name from terraform output
-  bucket: "YOUR_PROJECT_ID-recsys-data"
+  # GCS bucket name - will be created by Terraform
+  bucket: "product-recsys-mlops-recsys-data"
   # Artifact path within bucket
   artifactPath: "mlflow-artifacts"
 
@@ -38,9 +39,9 @@ serviceAccount:
   create: true
   name: mlflow-sa
   annotations:
-    # TODO: Update after creating GCP service account
-    # Format: iam.gke.io/gcp-service-account: mlflow-gcs@PROJECT_ID.iam.gserviceaccount.com
-    iam.gke.io/gcp-service-account: ""
+    # Link Kubernetes SA to GCP SA via Workload Identity
+    # This allows MLflow to access GCS without keys
+    iam.gke.io/gcp-service-account: "mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com"
 
 # Ingress configuration (optional - for team access)
 ingress:
