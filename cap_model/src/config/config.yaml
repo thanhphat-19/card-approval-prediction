@@ -1,8 +1,8 @@
-# Card Approval Prediction - Configuration
+# Credit Card Approval Prediction - Configuration
 
 # Data Configuration
 data:
-  raw_data_path: "data/raw/credit_applications.csv"
+  raw_data_path: "data/processed/credit_applications.csv"
   processed_data_path: "data/processed/processed_data.csv"
   test_size: 0.2
   validation_size: 0.1
@@ -15,7 +15,11 @@ features:
     - "housing_type"
     - "education_level"
     - "marital_status"
-  
+    - "gender"
+    - "owns_car"
+    - "owns_realty"
+    - "occupation"
+
   numerical_features:
     - "age"
     - "annual_income"
@@ -24,40 +28,53 @@ features:
     - "debt_to_income_ratio"
     - "num_existing_credit_cards"
     - "total_credit_limit"
-  
+    - "num_children"
+    - "num_family_members"
+
   target: "approval_status"
-  
+
   # Feature engineering options
   scaling_method: "standard"  # standard, minmax, robust
-  encoding_method: "onehot"   # onehot, label, target
-  handle_missing: "median"    # median, mean, mode, drop
+  encoding_method: "onehot"   # onehot, label
+  handle_missing: "median"    # median, mean, mode
 
 # Model Configuration
 model:
-  type: "xgboost"  # logistic, random_forest, xgboost, lightgbm, neural_net
-  
+  # Models to train
+  models_to_train:
+    - "AdaBoost"
+    - "XGBoost"
+    - "LightGBM"
+    - "CatBoost"
+    - "Naive Bayes"
+
   hyperparameters:
-    xgboost:
+    AdaBoost:
       n_estimators: 100
-      max_depth: 6
-      learning_rate: 0.1
-      subsample: 0.8
-      colsample_bytree: 0.8
-      gamma: 0
-      reg_alpha: 0
-      reg_lambda: 1
-      
-    random_forest:
-      n_estimators: 100
-      max_depth: 10
-      min_samples_split: 2
-      min_samples_leaf: 1
-      
-    logistic_regression:
-      C: 1.0
-      penalty: "l2"
-      solver: "lbfgs"
-      max_iter: 1000
+      learning_rate: 1.0
+      random_state: 42
+
+    XGBoost:
+      n_estimators: 500
+      max_depth: 3
+      random_state: 42
+      eval_metric: "logloss"
+
+    LightGBM:
+      n_estimators: 250
+      max_depth: 8
+      learning_rate: 0.02
+      random_state: 42
+      verbose: -1
+
+    CatBoost:
+      iterations: 250
+      depth: 8
+      learning_rate: 0.02
+      random_state: 42
+      verbose: 0
+
+    "Naive Bayes": {}
 
 # Training Configuration
 training:
@@ -65,10 +82,10 @@ training:
     enabled: true
     n_folds: 5
     stratified: true
-  
+
   class_balance:
-    method: "auto"  # auto, smote, undersample, oversample, none
-    
+    method: "smote"  # smote, undersample, oversample, none
+
   early_stopping:
     enabled: true
     patience: 10
@@ -82,50 +99,39 @@ evaluation:
     - "recall"
     - "f1_score"
     - "roc_auc"
-  
+
   threshold:
     optimization_metric: "f1_score"
     default: 0.5
 
 # MLflow Configuration
 mlflow:
-  tracking_uri: "http://localhost:5000"
-  experiment_name: "card-approval-classification"
-  enable_autolog: true
-  
+  tracking_uri: "http://127.0.0.1:5000"
+  experiment_name: "credit_card_approval_model_training"
+  enable_autolog: false
+
+  # Model Registry
+  registry:
+    model_name: "card_approval_model"
+
   # What to log
   log_params: true
   log_metrics: true
   log_model: true
   log_artifacts: true
-  
+
   # Artifacts to save
   save_confusion_matrix: true
   save_roc_curve: true
   save_feature_importance: true
-  save_shap_values: true
+  save_shap_values: false
 
 # Output Configuration
 output:
   model_dir: "models/"
-  figures_dir: "outputs/figures/"
+  figures_dir: "outputs/"
   reports_dir: "outputs/reports/"
   metrics_dir: "outputs/metrics/"
-
-# Hyperparameter Tuning
-hyperparameter_tuning:
-  enabled: false
-  method: "optuna"  # optuna, grid_search, random_search
-  n_trials: 50
-  timeout: 3600  # seconds
-  
-  search_space:
-    xgboost:
-      n_estimators: [50, 100, 200, 300]
-      max_depth: [3, 5, 7, 10]
-      learning_rate: [0.01, 0.05, 0.1, 0.3]
-      subsample: [0.6, 0.8, 1.0]
-      colsample_bytree: [0.6, 0.8, 1.0]
 
 # Reproducibility
 seed: 42
