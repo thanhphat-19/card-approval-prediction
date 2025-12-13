@@ -1,3 +1,71 @@
+# =================================================================
+# Card Approval Prediction API - Production Requirements
+# =================================================================
+
+# Documentation & Development Tools
 mkdocs-material==9.5.28
 pre-commit==4.3.0
-mlflow==3.6.0
+
+# FastAPI Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Data Validation
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+
+# MLflow Model Registry & Tracking
+mlflow==2.9.2
+google-cloud-storage==2.10.0  # Required for GCS artifact storage
+
+# Core Data Science Libraries
+numpy==1.26.2
+pandas==2.1.3
+scipy==1.15.3  # Match training environment
+
+# Machine Learning
+scikit-learn==1.3.2
+imbalanced-learn>=0.11.0,<1.0.0
+
+# Gradient Boosting Models (required for model inference)
+xgboost==3.1.2
+lightgbm==4.1.0
+catboost==1.2.2
+
+# Model Utilities
+joblib==1.3.2
+psutil==5.9.1
+
+# Visualization
+matplotlib>=3.7.2,<4.0.0
+seaborn>=0.12.2,<1.0.0
+
+# Logging
+loguru==0.7.2
+
+# Testing Framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2
+
+# Jupyter Notebook Support (for development & EDA)
+jupyter>=1.0.0
+ipykernel>=6.25.0
+ipywidgets>=8.1.0
+notebook>=7.0.0
+
+# Utilities
+python-multipart==0.0.6
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+tqdm>=4.65.0
+
+# Data Source - Kaggle (for dataset downloads)
+kaggle>=1.5.0
+hatchling>=1.15.1
+setuptools<81

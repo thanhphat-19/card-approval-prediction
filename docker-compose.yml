@@ -4,10 +4,13 @@ services:
   app:
     build:
       context: .
-      dockerfile: ./Dockerfile
-    container_name: ai-prod-recsys
+      dockerfile: Dockerfile
+    container_name: card-approval-api
     env_file:
       - .env
-    ports:
-      - 8000:8000
-    restart: always
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - ./gcp-key.json:/app/gcp-key.json:ro
+    restart: unless-stopped
+    network_mode: "host"  # Use host network to access K8s port-forwards

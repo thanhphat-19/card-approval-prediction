@@ -9,12 +9,12 @@ import sys
 import warnings
 from pathlib import Path
 
-from loguru import logger
-from src.data.data_loader import DataLoader
-
 # Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+project_root = Path(__file__).parent.parent  # noqa: E402
+sys.path.insert(0, str(project_root))  # noqa: E402
+
+from loguru import logger  # noqa: E402
+from src.data.data_loader import DataLoader  # noqa: E402
 
 warnings.filterwarnings("ignore")
 

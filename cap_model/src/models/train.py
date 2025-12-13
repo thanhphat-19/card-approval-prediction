@@ -81,6 +81,9 @@ class ModelTrainer:
 
         # Start MLflow run
         with mlflow.start_run(run_name=model_name):
+            # Capture run ID
+            run_id = mlflow.active_run().info.run_id
+
             # Log model parameters
             mlflow.log_param("model_type", model_name)
             mlflow.log_params(model.get_params())
@@ -144,6 +147,7 @@ class ModelTrainer:
                 "ROC-AUC": roc_auc,
                 "Training Time (s)": training_time,
                 "model_object": model,
+                "run_id": run_id,
             }
 
             logger.info(f"✓ {model_name} training completed")
@@ -236,7 +240,11 @@ class ModelTrainer:
         logger.info("\nPerformance Metrics:")
         for key, value in metrics.items():
             if pd.notna(value):
-                logger.info(f"  {key}: {value:.4f}")
+                # Format as float if numeric, otherwise as string
+                if isinstance(value, (int, float)):
+                    logger.info(f"  {key}: {value:.4f}")
+                else:
+                    logger.info(f"  {key}: {value}")
 
         return best_model_name, best_model, metrics
 
@@ -256,6 +264,9 @@ class ModelTrainer:
 
         # Store for later access
         self.best_model_name = best_model_name
+        # Find best result to get run_id
+        best_result = max(self.results, key=lambda x: x.get(metric, 0))
+        self.best_model_run_id = best_result.get("run_id")
         self.best_score = metrics.get(metric, 0)
 
         # Save model

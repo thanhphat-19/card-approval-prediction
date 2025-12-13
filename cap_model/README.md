@@ -1,205 +1,153 @@
-# Card Approval Prediction - Model Development
+# Card Approval Model - Training Pipeline
 
-This directory contains all machine learning model development code for credit card approval prediction.
+This folder contains the ML model training pipeline for credit card approval prediction.
 
----
-
-## 📁 Directory Structure
+## 📁 Structure
 
 ```
 cap_model/
-├── data/                   # Data storage and management
-│   ├── raw/               # Original, immutable data
-│   ├── processed/         # Cleaned and transformed data
-│   ├── features/          # Feature engineering outputs
-│   └── external/          # External datasets (e.g., credit bureau data)
-│
-├── notebooks/             # Jupyter notebooks for exploration
-│   ├── 01_eda.ipynb      # Exploratory Data Analysis
-│   ├── 02_feature_engineering.ipynb
-│   ├── 03_baseline_models.ipynb
-│   └── 04_model_comparison.ipynb
-│
-├── src/                   # Source code for model development
-│   ├── data/             # Data loading and processing
-│   ├── features/         # Feature engineering pipeline
-│   ├── models/           # Model training and evaluation
-│   ├── utils/            # Utility functions
-│   └── config/           # Configuration files
-│
-├── models/                # Trained model artifacts
-│   ├── baseline/         # Baseline models
-│   ├── experimental/     # Experimental models
-│   └── production/       # Production-ready models
-│
-├── experiments/           # MLflow experiment tracking
-│   └── configs/          # Experiment configurations
-│
-├── tests/                 # Unit and integration tests
-│   ├── test_data/
-│   ├── test_features/
-│   └── test_models/
-│
-├── scripts/               # Executable scripts
-│   ├── train.py          # Model training script
-│   ├── evaluate.py       # Model evaluation script
-│   └── predict.py        # Batch prediction script
-│
-├── outputs/               # Training outputs
-│   ├── figures/          # Plots and visualizations
-│   ├── reports/          # Analysis reports
-│   └── metrics/          # Evaluation metrics
-│
-├── requirements.txt       # Python dependencies
-├── setup.py              # Package setup
-└── README.md             # This file
+├── data/               # Data storage
+│   ├── raw/           # Raw application and credit records
+│   └── processed/     # Processed data + preprocessing artifacts
+├── notebooks/         # Jupyter notebooks for experimentation
+├── scripts/           # Training automation scripts
+├── src/               # Source code modules
+│   ├── data/         # Data loading
+│   ├── features/     # Feature engineering
+│   ├── models/       # Model training
+│   └── utils/        # Utility functions
+└── models/           # Trained model artifacts
 ```
-
----
 
 ## 🚀 Quick Start
 
-### 1. Setup Environment
+### 1. **Create Kaggle Confidential**
+
+```bash
+mkdir ~/.kaggle
+chmod 600 ~/.kaggle
+```
+
+### 2. **Download Data**
+```bash
+cd cap_model
+python scripts/download_data.py
+```
+
+### 2. **Run Data Preprocessing**
+```bash
+# Basic preprocessing
+python scripts/run_preprocessing.py
+
+# Custom settings
+python scripts/run_preprocessing.py \
+  --raw-data-dir data/raw \
+  --output-dir data/processed \
+  --test-size 0.2 \
+  --pca-components 5
+```
+
+**Output:**
+- `data/processed/X_train.csv`
+- `data/processed/X_test.csv`
+- `data/processed/y_train.csv`
+- `data/processed/y_test.csv`
+- `data/processed/scaler.pkl`
+- `data/processed/pca.pkl`
+- `data/processed/feature_names.json`
+
+### 3. **Train Models**
+```bash
+# Train all models with auto-registration
+python scripts/run_training.py
+
+# Train specific model
+python scripts/run_training.py --models XGBoost
+
+# Train without auto-registration
+python scripts/run_training.py --no-auto-register
+```
+
+**Options:**
+- `--data-dir`: Processed data directory (default: `data/processed`)
+- `--output-dir`: Model output directory (default: `models`)
+- `--mlflow-uri`: MLflow tracking URI (default: `http://127.0.0.1:5000`)
+- `--models`: Specific models to train (choices: XGBoost, LightGBM, CatBoost, AdaBoost, NaiveBayes)
+- `--metric`: Metric for best model selection (default: `F1-Score`)
+- `--no-auto-register`: Disable automatic model registration to MLflow
+
+**Output:**
+- Best model saved to `models/best_model_<name>.pkl`
+- Model metadata in `models/best_model_metadata.json`
+- Evaluation plots in `models/evaluation/`
+- Model registered to MLflow Production
+
+### 4. **View MLflow UI**
+```bash
+mlflow ui --host 0.0.0.0 --port 5000
+# Open: http://localhost:5000
+```
+
+## 📊 Complete Pipeline
+
+Run the entire pipeline from scratch:
 
 ```bash
 cd cap_model
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Step 1: Download data
+python scripts/download_data.py
 
+# Step 2: Preprocess
+python scripts/run_preprocessing.py
+
+# Step 3: Train and register best model
+python scripts/run_training.py
+
+# Step 4: Verify in MLflow
+mlflow ui
+```
+
+## 🔍 Exploratory Data Analysis (Optional)
+
+Run EDA to understand the data:
+
+```bash
+python scripts/run_eda.py
+```
+
+## 📝 Key Files
+
+| File | Description |
+|------|-------------|
+| `scripts/run_preprocessing.py` | Data preprocessing pipeline |
+| `scripts/run_training.py` | Model training with MLflow |
+| `src/data/data_loader.py` | Data loading utilities |
+| `src/features/feature_engineering.py` | Feature engineering |
+| `src/models/train.py` | Model training logic |
+| `notebooks/01_eda.ipynb` | Exploratory analysis |
+| `notebooks/02_data_processing.ipynb` | Data preparation |
+| `notebooks/03_model_training.ipynb` | Model experiments |
+
+## 🎯 Model Performance
+
+Best model (XGBoost):
+- **Accuracy**: 96.7%
+- **F1-Score**: 0.9667
+- **ROC-AUC**: 0.9932
+- **Precision**: 97.3%
+- **Recall**: 96.0%
+
+## 🛠️ Requirements
+
+```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install -r ../requirements.txt
 ```
 
-### 2. Data Preparation
+## 📌 Notes
 
-```bash
-# Place raw data in data/raw/
-# Run preprocessing
-python scripts/preprocess_data.py
-```
-
-### 3. Exploratory Analysis
-
-```bash
-# Launch Jupyter
-jupyter notebook notebooks/01_eda.ipynb
-```
-
-### 4. Train Models
-
-```bash
-# Train baseline model
-python scripts/train.py --config experiments/configs/baseline.yaml
-
-# Train with MLflow tracking
-python scripts/train.py --config experiments/configs/xgboost.yaml --track-mlflow
-```
-
----
-
-## 📊 Model Development Workflow
-
-### Phase 1: Data Understanding
-1. Load and explore raw data
-2. Understand feature distributions
-3. Identify missing values and outliers
-4. Analyze target variable (approval/rejection rate)
-
-### Phase 2: Feature Engineering
-1. Handle missing values
-2. Encode categorical variables
-3. Create derived features
-4. Feature scaling and normalization
-5. Feature selection
-
-### Phase 3: Model Training
-1. Train baseline models (Logistic Regression)
-2. Train tree-based models (Random Forest, XGBoost)
-3. Train neural networks
-4. Hyperparameter tuning
-5. Cross-validation
-
-### Phase 4: Model Evaluation
-1. Accuracy, Precision, Recall, F1-Score
-2. ROC-AUC curve
-3. Confusion matrix
-4. Feature importance
-5. Model interpretability (SHAP values)
-
-### Phase 5: Model Selection
-1. Compare model performance
-2. Consider business constraints
-3. Evaluate model fairness
-4. Select production model
-
----
-
-## 🔬 Experiment Tracking with MLflow
-
-All experiments are tracked in MLflow:
-
-```python
-import mlflow
-
-mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.set_experiment("card-approval-classification")
-
-with mlflow.start_run(run_name="xgboost-v1"):
-    # Train model
-    model = train_xgboost(X_train, y_train)
-    
-    # Log parameters
-    mlflow.log_params(params)
-    
-    # Log metrics
-    mlflow.log_metrics(metrics)
-    
-    # Log model
-    mlflow.sklearn.log_model(model, "model")
-```
-
----
-
-## 📈 Model Performance Targets
-
-| Metric | Baseline | Target | Production |
-|--------|----------|--------|------------|
-| Accuracy | 0.70 | 0.85 | 0.90 |
-| Precision | 0.65 | 0.80 | 0.85 |
-| Recall | 0.60 | 0.75 | 0.80 |
-| F1-Score | 0.62 | 0.77 | 0.82 |
-| ROC-AUC | 0.75 | 0.88 | 0.92 |
-
----
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-pytest tests/
-
-# Run specific test
-pytest tests/test_models/test_training.py
-
-# Run with coverage
-pytest --cov=src tests/
-```
-
----
-
-## 📝 Documentation
-
-- [Data Dictionary](docs/data_dictionary.md)
-- [Feature Engineering](docs/feature_engineering.md)
-- [Model Architecture](docs/model_architecture.md)
-- [Evaluation Metrics](docs/evaluation_metrics.md)
-
----
-
-## 🔗 Related Documentation
-
-- Main project: `/docs/README.md`
-- MLflow guide: `/docs/05_MLflow_Model_Development.md`
-- Deployment: `/docs/03_Helm_Deployment.md`
+- **Preprocessing artifacts** (scaler.pkl, pca.pkl, feature_names.json) are automatically logged to MLflow
+- **Auto-registration** is enabled by default - best model goes to Production
+- **Feature alignment** is critical - feature_names.json must contain 48 one-hot encoded features
+- **MLflow** must be running before training: `mlflow ui --port 5000`

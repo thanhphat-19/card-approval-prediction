@@ -138,13 +138,24 @@ class FeatureEngineer:
 
             if self.scaler:
                 scaler_path = output_path / "scaler.pkl"
-                joblib.dump(self.scaler, scaler_path)
+                # Save the inner sklearn scaler, not the wrapper class
+                joblib.dump(self.scaler.scaler, scaler_path)
                 logger.info(f"Saved scaler to {scaler_path}")
 
             if self.pca:
                 pca_path = output_path / "pca.pkl"
-                joblib.dump(self.pca, pca_path)
+                # Save the inner sklearn PCA, not the wrapper class
+                joblib.dump(self.pca.pca, pca_path)
                 logger.info(f"Saved PCA to {pca_path}")
+
+            # Save feature names for inference alignment
+            if self.feature_names:
+                import json
+
+                features_path = output_path / "feature_names.json"
+                with open(features_path, "w") as f:
+                    json.dump({"feature_names": self.feature_names}, f, indent=2)
+                logger.info(f"Saved feature names to {features_path}")
 
         logger.info("=" * 80)
         logger.info("PIPELINE COMPLETED")

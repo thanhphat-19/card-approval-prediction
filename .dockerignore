@@ -1,0 +1,92 @@
+# ============================================
+# Python & Build Artifacts
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================
+# Environments
+# ============================================
+venv/
+env/
+ENV/
+.env
+
+# ============================================
+# IDEs & Editors
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Git & Version Control
+# ============================================
+.git/
+.gitignore
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+app/logs/
+
+# ============================================
+# Development & Training Artifacts
+# ============================================
+# MLflow
+mlruns/
+
+# Training data & models
+cap_model/data/raw/
+cap_model/data/processed/*.csv
+cap_model/models/*.pkl
+cap_model/models/*.json
+cap_model/outputs/
+cap_model/notebooks/
+
+# Terraform
+terraform/
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# ============================================
+# Docker Files (not needed in image)
+# ============================================
+Dockerfile
+docker-compose.yml
+.dockerignore
+helm-charts/
+
+# ============================================
+# Documentation (not needed in runtime)
+# ============================================
+*.md
+!app/README.md
+!cap_model/README.md
+docs/
+
+# ============================================
+# Scripts (not needed in runtime)
+# ============================================
+cap_model/scripts/
+KISS_CLEANUP_SCRIPT.sh

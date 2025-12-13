@@ -143,6 +143,11 @@ class DataLoader:
         X = merged_data.drop("Label", axis=1)
         y = merged_data["Label"]
 
+        # Remove ID column - it's just an identifier, not a predictive feature
+        if "ID" in X.columns:
+            X = X.drop("ID", axis=1)
+            logger.info("Removed ID column from features")
+
         logger.info(f"Final features shape: {X.shape}")
         logger.info(f"Final target shape: {y.shape}")
 

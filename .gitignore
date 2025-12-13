@@ -182,9 +182,9 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#  and can be added to the global gitignore or merged into this file. However, if you prefer,
 #  you could uncomment the following to ignore the entire vscode folder
 # .vscode/
 
@@ -219,13 +219,32 @@ terraform.tfvars
 *.tfvars
 !terraform.tfvars.example
 
-# Service account keys
-*.json
+# Service account keys (be specific, not all json files)
+gcp-key.json
+*-key.json
+credentials.json
 
 # Backup files
 *.backup
 *~
 
+# document
+docs/
+
 # Crash logs
 crash.log
-docs
+
+# Project-specific artifacts
+mlruns/
+cap_model/data/raw/
+cap_model/models/*.pkl
+cap_model/models/*.json
+cap_model/outputs/
+catboost_info/
+*.csv.gz
+
+# Keep these json files
+!pyproject.json
+!package.json
+!tsconfig.json
+!cap_model/data/processed/feature_names.json
