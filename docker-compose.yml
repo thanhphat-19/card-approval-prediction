@@ -4,10 +4,17 @@ services:
   app:
     build:
       context: .
-      dockerfile: ./Dockerfile
-    container_name: ai-prod-recsys
+      dockerfile: Dockerfile
+    container_name: card-approval-api
     env_file:
       - .env
     ports:
-      - 8000:8000
-    restart: always
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    restart: unless-stopped
+    network_mode: "host"  # Use host network to access K8s port-forwards
+
+# No local PostgreSQL - using PostgreSQL from Kubernetes cluster
+# Use port-forward to access: kubectl port-forward -n recsys-training svc/postgres 5432:5432

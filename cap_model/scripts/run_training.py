@@ -9,19 +9,19 @@ import sys
 import warnings
 from pathlib import Path
 
-import pandas as pd
-from loguru import logger
-from src.models.train import ModelTrainer
-from src.utils.metrics import get_classification_report
+# Add project root to path
+project_root = Path(__file__).parent.parent  # noqa: E402
+sys.path.insert(0, str(project_root))  # noqa: E402
+
+import pandas as pd  # noqa: E402
+from loguru import logger  # noqa: E402
+from src.models.train import ModelTrainer  # noqa: E402
+from src.utils.metrics import get_classification_report  # noqa: E402
 
 # Import plotting functions
-from src.utils.plotting import plot_confusion_matrix, plot_precision_recall_curve, plot_roc_curve
+from src.utils.plotting import plot_confusion_matrix, plot_precision_recall_curve, plot_roc_curve  # noqa: E402
 
 warnings.filterwarnings("ignore")
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 
 def main():
@@ -47,6 +47,16 @@ def main():
         "--metric",
         default="F1-Score",
         help="Metric for best model selection (default: F1-Score)",
+    )
+    parser.add_argument(
+        "--auto-register",
+        action="store_true",
+        help="Automatically register best model to MLflow Production stage",
+    )
+    parser.add_argument(
+        "--model-name",
+        default="card_approval_model",
+        help="Model name for MLflow registry (default: card_approval_model)",
     )
     args = parser.parse_args()
 
@@ -148,7 +158,7 @@ def main():
         logger.info("\n" + "=" * 80)
         logger.info(f"🏆 BEST MODEL: {trainer.best_model_name}")
         logger.info("=" * 80)
-        logger.info(f"Metric ({args.metric}): {trainer.best_score:.4f}")
+        logger.info(f"Metric ({args.metric}): {trainer.best_score}")
 
         logger.info("\n" + "=" * 80)
         logger.info("✅ TRAINING & EVALUATION COMPLETED SUCCESSFULLY")
@@ -156,6 +166,45 @@ def main():
         logger.info(f"Results saved to: {args.output_dir}")
         logger.info(f"Evaluation plots: {eval_dir}")
         logger.info(f"MLflow UI: {args.mlflow_uri}")
+
+        # Auto-register best model to Production
+        if args.auto_register:
+            logger.info("\n" + "=" * 80)
+            logger.info("🚀 AUTO-REGISTERING BEST MODEL TO PRODUCTION")
+            logger.info("=" * 80)
+
+            try:
+                from src.utils.mlflow_registry import MLflowRegistry
+
+                registry = MLflowRegistry(tracking_uri=args.mlflow_uri)
+
+                # Get the best run ID
+                best_run_id = trainer.best_model_run_id
+
+                # Register model
+                registration_info = registry.register_model(run_id=best_run_id, model_name=args.model_name)
+
+                model_version = registration_info["version"]
+
+                # Add description to the registered version
+                description = f"Auto-registered: {trainer.best_model_name} | {args.metric}={trainer.best_score}"
+                registry.add_version_description(
+                    model_name=args.model_name, version=model_version, description=description
+                )
+
+                # Transition to Production
+                registry.transition_model_stage(model_name=args.model_name, version=model_version, stage="Production")
+
+                logger.info(f"✅ Model registered: {args.model_name} v{model_version}")
+                logger.info(f"✅ Transitioned to Production stage")
+                logger.info(f"🎯 Run ID: {best_run_id}")
+
+            except Exception as e:
+                logger.warning(f"⚠️  Auto-registration failed: {e}")
+                logger.info("You can manually register using:")
+                logger.info(
+                    f"  python scripts/register_model.py --run-id {trainer.best_model_run_id} --model-name {args.model_name} --stage Production"
+                )
 
         return 0
 
