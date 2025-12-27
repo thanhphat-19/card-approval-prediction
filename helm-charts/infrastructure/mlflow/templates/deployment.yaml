@@ -19,13 +19,18 @@ spec:
         app: {{ include "mlflow.name" . }}
         release: {{ .Release.Name }}
     spec:
-      {{- if .Values.serviceAccount.create }}
+{{- if .Values.serviceAccount.create }}
       serviceAccountName: {{ .Values.serviceAccount.name }}
-      {{- end }}
+{{- end }}
       containers:
       - name: mlflow
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+        env:
+          - name: MLFLOW_SERVER_ALLOWED_HOSTS
+            value: "*"
+
         command:
         - /bin/bash
         - -c
@@ -37,7 +42,9 @@ spec:
             --backend-store-uri postgresql://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@{{ .Values.postgres.host }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgres.port }}/{{ .Values.postgres.database }} \
             --default-artifact-root gs://{{ .Values.gcs.bucket }}/{{ .Values.gcs.artifactPath }}/ \
             --serve-artifacts \
-            --artifacts-destination gs://{{ .Values.gcs.bucket }}/{{ .Values.gcs.artifactPath }}/
+            --artifacts-destination gs://{{ .Values.gcs.bucket }}/{{ .Values.gcs.artifactPath }}/ \
+            --gunicorn-opts "--forwarded-allow-ips='*' --timeout 120"
+
         ports:
         - name: http
           containerPort: 5000

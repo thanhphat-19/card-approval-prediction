@@ -1,0 +1,31 @@
+# Redis Configuration
+image:
+  repository: redis
+  tag: "7-alpine"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 6379
+
+# Resource limits
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "50m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+# Persistent storage
+persistence:
+  enabled: true
+  storageClass: "standard-rwo"
+  size: 1Gi
+  reclaimPolicy: Retain
+
+# Redis configuration
+config:
+  save: "900 1 300 10 60 10000"
+  maxmemory: "256mb"
+  maxmemoryPolicy: "allkeys-lru"
