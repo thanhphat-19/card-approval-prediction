@@ -2,39 +2,51 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "redis.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "redis.labels" . | nindent 4 }}
+    app: {{ include "redis.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "redis.labels" . | nindent 6 }}
+      app: {{ include "redis.name" . }}
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        {{- include "redis.labels" . | nindent 8 }}
+        app: {{ include "redis.name" . }}
+        release: {{ .Release.Name }}
     spec:
       containers:
       - name: redis
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-        - containerPort: {{ .Values.service.port }}
-          name: redis
         command:
         - redis-server
-        {{- if .Values.config.save }}
-        - "--save"
-        - "{{ .Values.config.save }}"
+        {{- if .Values.persistence.enabled }}
+        - --appendonly yes
+        - --save {{ .Values.config.save }}
         {{- end }}
-        {{- if .Values.config.maxmemory }}
-        - "--maxmemory"
-        - "{{ .Values.config.maxmemory }}"
-        {{- end }}
-        {{- if .Values.config.maxmemoryPolicy }}
-        - "--maxmemory-policy"
-        - "{{ .Values.config.maxmemoryPolicy }}"
-        {{- end }}
+        - --maxmemory {{ .Values.config.maxmemory }}
+        - --maxmemory-policy {{ .Values.config.maxmemoryPolicy }}
+        ports:
+        - name: redis
+          containerPort: 6379
+          protocol: TCP
+        livenessProbe:
+          tcpSocket:
+            port: redis
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         {{- if .Values.persistence.enabled }}
@@ -46,5 +58,5 @@ spec:
       volumes:
       - name: redis-data
         persistentVolumeClaim:
-          claimName: {{ include "redis.fullname" . }}
+          claimName: {{ include "redis.fullname" . }}-pvc
       {{- end }}

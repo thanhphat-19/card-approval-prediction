@@ -110,8 +110,8 @@ api:
     create: true
     name: card-approval-api-sa
     annotations:
-      # TODO: Setup after deployment if needed for model access
-      iam.gke.io/gcp-service-account: ""
+      # Link to same GCP SA as MLflow for model artifact access
+      iam.gke.io/gcp-service-account: "mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com"
 
   # Autoscaling
   autoscaling:

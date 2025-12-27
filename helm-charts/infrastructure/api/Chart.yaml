@@ -1,4 +1,4 @@
-apiVersion: v2
+apiVersion: v1
 name: api
 description: Card Approval Prediction API infrastructure chart
 type: application

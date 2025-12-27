@@ -17,7 +17,7 @@ resources:
     memory: "256Mi"
     cpu: "200m"
 
-# Persistence configuration
+# Persistent storage
 persistence:
   enabled: true
   storageClass: "standard-rwo"
@@ -26,8 +26,6 @@ persistence:
 
 # Redis configuration
 config:
-  # Save snapshots
   save: "900 1 300 10 60 10000"
-  # Max memory policy
   maxmemory: "256mb"
   maxmemoryPolicy: "allkeys-lru"
