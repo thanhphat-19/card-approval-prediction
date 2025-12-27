@@ -403,30 +403,30 @@ Like a private warehouse for your packaged applications - only your team can acc
 ### Cost Optimization Tips
 
 1. **Stop pods when not in use:**
-    
+
     ```bash
     kubectl scale deployment/api --replicas=0
     kubectl scale deployment/mlflow --replicas=0
-    
+
     ```
-    
+
     Cost: $0 for compute
-    
+
 2. **Use lifecycle rules:**
     - Auto-delete old experiment artifacts
     - Keep only recent models
     - Already configured in bucket
 3. **Clean up old images:**
-    
+
     ```bash
     gcloud artifacts docker images list \\
       us-central1-docker.pkg.dev/PROJECT_ID/PROJECT_ID-recsys
-    
+
     # Delete old versions
     gcloud artifacts docker images delete IMAGE_NAME:OLD_TAG
-    
+
     ```
-    
+
 4. **Choose closest region:**
     - Reduces network egress costs
     - Faster access
@@ -565,42 +565,42 @@ Cost: ~$100-200/month
 When you're ready to scale:
 
 1. **Add remote state backend:**
-    
+
     ```hcl
     backend "gcs" {
       bucket = "prod-recsys-terraform-state"
       prefix = "terraform/state"
     }
-    
+
     ```
-    
+
 2. **Split buckets:**
-    
+
     ```hcl
     resource "google_storage_bucket" "data" { ... }
     resource "google_storage_bucket" "models" { ... }
     resource "google_storage_bucket" "mlflow" { ... }
-    
+
     ```
-    
+
 3. **Add custom VPC:**
-    
+
     ```hcl
     resource "google_compute_network" "vpc" { ... }
     resource "google_compute_subnetwork" "subnet" { ... }
-    
+
     ```
-    
+
 4. **Switch to Standard GKE:**
-    
+
     ```hcl
     resource "google_container_cluster" "primary" {
       enable_autopilot = false  # Change this
       # Add node pool configuration
     }
-    
+
     ```
-    
+
 
 ---
 

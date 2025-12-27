@@ -1,0 +1,24 @@
+# Global variables for all hosts
+
+# GCP Configuration
+gcp_project_id: "product-recsys-mlops"
+gcp_region: "us-east1"
+gcp_zone: "us-east1-b"
+
+# Jenkins Configuration
+jenkins_port: 8080
+jenkins_admin_user: "admin"
+jenkins_admin_password: "admin123"  # Change this in production
+jenkins_home: "/var/jenkins_home"
+
+# Docker Registry
+docker_registry: "us-east1-docker.pkg.dev"
+docker_repository: "{{ gcp_project_id }}/product-recsys-mlops-recsys"
+
+# SonarQube Configuration
+sonarqube_url: "http://localhost:9000"
+sonarqube_token: ""  # Will be set after SonarQube setup
+
+# GitHub Configuration
+github_repo: "https://github.com/yourusername/card-approval-prediction"
+github_branch: "main"

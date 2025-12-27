@@ -1,6 +1,7 @@
 import os
-import sys
+
 import kaggle
+
 
 def download_dataset():
     DATASET = "rikdifos/credit-card-approval-prediction"
@@ -10,11 +11,7 @@ def download_dataset():
     os.makedirs(TARGET_DIR, exist_ok=True)
 
     print(f"[INFO] Downloading dataset: {DATASET}")
-    kaggle.api.dataset_download_files(
-        dataset=DATASET,
-        path=TARGET_DIR,
-        unzip=True
-    )
+    kaggle.api.dataset_download_files(dataset=DATASET, path=TARGET_DIR, unzip=True)
 
     print(f"[DONE] Dataset downloaded and extracted to: {TARGET_DIR}")
 

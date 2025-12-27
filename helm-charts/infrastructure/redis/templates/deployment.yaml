@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redis.fullname" . }}
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "redis.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "redis.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: redis
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+          name: redis
+        command:
+        - redis-server
+        {{- if .Values.config.save }}
+        - "--save"
+        - "{{ .Values.config.save }}"
+        {{- end }}
+        {{- if .Values.config.maxmemory }}
+        - "--maxmemory"
+        - "{{ .Values.config.maxmemory }}"
+        {{- end }}
+        {{- if .Values.config.maxmemoryPolicy }}
+        - "--maxmemory-policy"
+        - "{{ .Values.config.maxmemoryPolicy }}"
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        {{- if .Values.persistence.enabled }}
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: {{ include "redis.fullname" . }}
+      {{- end }}

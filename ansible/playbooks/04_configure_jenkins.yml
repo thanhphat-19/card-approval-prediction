@@ -1,0 +1,156 @@
+---
+- name: Configure Jenkins with Plugins and Credentials
+  hosts: jenkins
+  become: yes
+  vars:
+    jenkins_url: "http://localhost:{{ jenkins_port }}"
+    jenkins_cli_jar: "/opt/jenkins/jenkins-cli.jar"
+
+  tasks:
+    - name: Download Jenkins CLI
+      get_url:
+        url: "{{ jenkins_url }}/jnlpJars/jenkins-cli.jar"
+        dest: "{{ jenkins_cli_jar }}"
+        mode: '0644'
+      retries: 5
+      delay: 10
+
+    - name: Create list of Jenkins plugins to install
+      copy:
+        dest: /opt/jenkins/plugins.txt
+        content: |
+          git
+          github
+          github-branch-source
+          workflow-aggregator
+          pipeline-stage-view
+          docker-workflow
+          docker-plugin
+          kubernetes
+          kubernetes-cli
+          google-kubernetes-engine
+          google-container-registry-auth
+          sonar
+          blueocean
+          configuration-as-code
+          job-dsl
+          ansible
+          credentials-binding
+          ssh-credentials
+          timestamper
+          ws-cleanup
+          build-timeout
+          email-ext
+          slack
+          matrix-auth
+          pam-auth
+          ldap
+          role-strategy
+          authorize-project
+          build-monitor-plugin
+          monitoring
+          metrics
+          prometheus
+        mode: '0644'
+
+    - name: Install Jenkins plugins
+      shell: |
+        while read plugin; do
+          java -jar {{ jenkins_cli_jar }} \
+            -s {{ jenkins_url }} \
+            -auth {{ jenkins_admin_user }}:{{ jenkins_admin_password }} \
+            install-plugin $plugin </dev/null
+        done < /opt/jenkins/plugins.txt
+      register: plugin_install
+      ignore_errors: yes
+
+    - name: Create GCP service account key file
+      copy:
+        dest: /opt/jenkins/gcp-key.json
+        content: |
+          {
+            "type": "service_account",
+            "project_id": "{{ gcp_project_id }}",
+            "private_key_id": "YOUR_KEY_ID",
+            "private_key": "YOUR_PRIVATE_KEY",
+            "client_email": "jenkins@{{ gcp_project_id }}.iam.gserviceaccount.com",
+            "client_id": "YOUR_CLIENT_ID",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/jenkins%40{{ gcp_project_id }}.iam.gserviceaccount.com"
+          }
+        mode: '0600'
+        owner: 1000
+        group: 1000
+
+    - name: Create Jenkins credentials script
+      copy:
+        dest: /opt/jenkins/create-credentials.groovy
+        content: |
+          import jenkins.model.Jenkins
+          import com.cloudbees.plugins.credentials.domains.Domain
+          import com.cloudbees.plugins.credentials.CredentialsScope
+          import com.cloudbees.plugins.credentials.SystemCredentialsProvider
+          import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl
+          import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl
+          import com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl
+          import hudson.util.Secret
+
+          def jenkins = Jenkins.getInstance()
+          def domain = Domain.global()
+          def store = SystemCredentialsProvider.getInstance().getStore()
+
+          // GitHub credentials
+          def githubCreds = new UsernamePasswordCredentialsImpl(
+            CredentialsScope.GLOBAL,
+            "github-credentials",
+            "GitHub Credentials",
+            "YOUR_GITHUB_USERNAME",
+            "YOUR_GITHUB_TOKEN"
+          )
+
+          // DockerHub credentials
+          def dockerCreds = new UsernamePasswordCredentialsImpl(
+            CredentialsScope.GLOBAL,
+            "dockerhub-credentials",
+            "DockerHub Credentials",
+            "YOUR_DOCKERHUB_USERNAME",
+            "YOUR_DOCKERHUB_PASSWORD"
+          )
+
+          // SonarQube token
+          def sonarToken = new StringCredentialsImpl(
+            CredentialsScope.GLOBAL,
+            "sonarqube-token",
+            "SonarQube Token",
+            Secret.fromString("YOUR_SONARQUBE_TOKEN")
+          )
+
+          // Add credentials
+          store.addCredentials(domain, githubCreds)
+          store.addCredentials(domain, dockerCreds)
+          store.addCredentials(domain, sonarToken)
+
+          jenkins.save()
+          println("Credentials created successfully!")
+        mode: '0644'
+
+    - name: Restart Jenkins to apply plugins
+      shell: |
+        docker restart jenkins
+      when: plugin_install.changed
+
+    - name: Wait for Jenkins to restart
+      wait_for:
+        port: "{{ jenkins_port }}"
+        delay: 30
+        timeout: 300
+      when: plugin_install.changed
+
+    - name: Display configuration status
+      debug:
+        msg:
+          - "Jenkins configuration complete!"
+          - "Plugins installed successfully"
+          - "Please update the credential files with actual values"

@@ -1,11 +1,13 @@
+import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from app.core.config import get_settings
 from app.core.logging import setup_logging
+from app.core.metrics import ACTIVE_REQUESTS, REQUEST_DURATION, metrics_endpoint, track_request_metrics
 from app.routers import health, predict
 
 # Setup
@@ -46,9 +48,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Request tracking middleware
+@app.middleware("http")
+async def track_requests(request: Request, call_next):
+    """Middleware to track request metrics"""
+    start_time = time.time()
+    ACTIVE_REQUESTS.inc()
+
+    try:
+        response = await call_next(request)
+        duration = time.time() - start_time
+
+        # Track metrics
+        track_request_metrics(method=request.method, endpoint=request.url.path, status_code=response.status_code)
+
+        REQUEST_DURATION.labels(method=request.method, endpoint=request.url.path).observe(duration)
+
+        return response
+    finally:
+        ACTIVE_REQUESTS.dec()
+
+
 # Include routers
 app.include_router(health.router)
 app.include_router(predict.router)
+
+
+# Metrics endpoint for Prometheus
+@app.get("/metrics", tags=["Monitoring"])
+async def get_metrics():
+    """Prometheus metrics endpoint"""
+    return await metrics_endpoint()
 
 
 @app.get("/")

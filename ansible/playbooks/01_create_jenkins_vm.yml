@@ -1,0 +1,102 @@
+---
+- name: Create Jenkins VM on Google Cloud Platform
+  hosts: localhost
+  gather_facts: no
+  vars:
+    instance_name: jenkins-server
+    machine_type: n2-standard-4
+    disk_size: 100
+    image_family: ubuntu-2204-lts
+    image_project: ubuntu-os-cloud
+
+  tasks:
+    - name: Create SSH key pair for Jenkins VM
+      openssh_keypair:
+        path: ~/.ssh/gcp-jenkins-key
+        size: 2048
+        state: present
+        force: no
+      register: ssh_key
+
+    - name: Create firewall rules for Jenkins
+      shell: |
+        gcloud compute firewall-rules create jenkins-allow-http \
+          --allow tcp:{{ jenkins_port }},tcp:50000,tcp:22 \
+          --source-ranges 0.0.0.0/0 \
+          --target-tags jenkins-server \
+          --project {{ gcp_project_id }} \
+          --description "Allow Jenkins web UI and agent connections" \
+          2>/dev/null || echo "Firewall rule already exists"
+      register: firewall_result
+
+    - name: Create firewall rule for SonarQube
+      shell: |
+        gcloud compute firewall-rules create sonarqube-allow-http \
+          --allow tcp:9000 \
+          --source-ranges 0.0.0.0/0 \
+          --target-tags jenkins-server \
+          --project {{ gcp_project_id }} \
+          --description "Allow SonarQube access" \
+          2>/dev/null || echo "Firewall rule already exists"
+
+    - name: Check if instance exists
+      shell: |
+        gcloud compute instances describe {{ instance_name }} \
+          --zone={{ gcp_zone }} \
+          --project={{ gcp_project_id }} \
+          --format="value(name)" 2>/dev/null || echo ""
+      register: existing_instance
+
+    - name: Create GCE instance for Jenkins
+      shell: |
+        gcloud compute instances create {{ instance_name }} \
+          --project={{ gcp_project_id }} \
+          --zone={{ gcp_zone }} \
+          --machine-type={{ machine_type }} \
+          --network-interface=network-tier=PREMIUM,subnet=default \
+          --maintenance-policy=MIGRATE \
+          --provisioning-model=STANDARD \
+          --create-disk=auto-delete=yes,boot=yes,device-name={{ instance_name }},image-project={{ image_project }},image-family={{ image_family }},mode=rw,size={{ disk_size }},type=pd-standard \
+          --tags=jenkins-server,http-server,https-server \
+          --metadata=ssh-keys="ubuntu:{{ lookup('file', '~/.ssh/gcp-jenkins-key.pub') }}" \
+          --metadata=startup-script='#!/bin/bash
+            apt-get update
+            apt-get install -y ca-certificates curl gnupg
+            echo "VM initialization complete" > /tmp/startup-complete.txt'
+      when: existing_instance.stdout == ""
+      register: instance_creation
+
+    - name: Wait for instance to be created
+      pause:
+        seconds: 30
+      when: instance_creation.changed
+
+    - name: Get instance external IP
+      shell: |
+        gcloud compute instances describe {{ instance_name }} \
+          --zone={{ gcp_zone }} \
+          --project={{ gcp_project_id }} \
+          --format='value(networkInterfaces[0].accessConfigs[0].natIP)'
+      register: external_ip
+
+    - name: Wait for SSH to be available
+      wait_for:
+        host: "{{ external_ip.stdout }}"
+        port: 22
+        timeout: 300
+
+    - name: Update inventory file with Jenkins server IP
+      lineinfile:
+        path: ../inventory/hosts.ini
+        regexp: '^# jenkins-server'
+        line: "jenkins-server ansible_host={{ external_ip.stdout }} ansible_user=ubuntu"
+
+    - name: Display instance information
+      debug:
+        msg:
+          - "=================================================="
+          - "Jenkins VM created successfully!"
+          - "Instance Name: {{ instance_name }}"
+          - "External IP: {{ external_ip.stdout }}"
+          - "SSH Command: ssh -i ~/.ssh/gcp-jenkins-key ubuntu@{{ external_ip.stdout }}"
+          - "=================================================="

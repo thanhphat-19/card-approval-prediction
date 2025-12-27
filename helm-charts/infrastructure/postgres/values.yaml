@@ -33,7 +33,7 @@ persistence:
   # Retain policy keeps disk even after helm uninstall
   # Options: Retain, Delete
   reclaimPolicy: Retain
-  
+
   # Backup configuration
   backup:
     enabled: false  # Enable for production

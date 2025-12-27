@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "api.fullname" . }}
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "api.labels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- if .Values.monitoring.enabled }}
+        {{- toYaml .Values.monitoring.annotations | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "api.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "api.serviceAccountName" . }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: api
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        env:
+        - name: APP_NAME
+          value: {{ .Values.config.appName | quote }}
+        - name: APP_VERSION
+          value: {{ .Values.config.appVersion | quote }}
+        - name: LOG_LEVEL
+          value: {{ .Values.config.logLevel | quote }}
+        - name: MODEL_NAME
+          value: {{ .Values.config.modelName | quote }}
+        - name: MODEL_STAGE
+          value: {{ .Values.config.modelStage | quote }}
+        - name: MLFLOW_TRACKING_URI
+          value: {{ .Values.mlflow.trackingUri | quote }}
+        - name: DATABASE_URL
+          value: "postgresql://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@{{ .Values.postgres.host }}:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+        - name: REDIS_URL
+          value: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}/0"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          {{- toYaml .Values.healthCheck.livenessProbe | nindent 10 }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          {{- toYaml .Values.healthCheck.readinessProbe | nindent 10 }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}

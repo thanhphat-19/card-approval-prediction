@@ -1,0 +1,144 @@
+---
+- name: Deploy Jenkins with Docker
+  hosts: jenkins
+  become: yes
+
+  tasks:
+    - name: Create Jenkins directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: '0755'
+      loop:
+        - "{{ jenkins_home }}"
+        - /var/jenkins_backup
+        - /opt/jenkins
+
+    - name: Create Jenkins Docker Compose file
+      copy:
+        dest: /opt/jenkins/docker-compose.yml
+        content: |
+          version: '3.8'
+
+          services:
+            jenkins:
+              image: jenkins/jenkins:lts-jdk17
+              container_name: jenkins
+              restart: unless-stopped
+              privileged: true
+              user: root
+              ports:
+                - "{{ jenkins_port }}:8080"
+                - "50000:50000"
+              volumes:
+                - {{ jenkins_home }}:/var/jenkins_home
+                - /var/run/docker.sock:/var/run/docker.sock
+                - /usr/local/bin/docker:/usr/local/bin/docker
+                - /usr/local/bin/kubectl:/usr/local/bin/kubectl
+                - /usr/bin/gcloud:/usr/bin/gcloud
+              environment:
+                - JENKINS_OPTS=--prefix=/
+                - JAVA_OPTS=-Duser.timezone=UTC -Dhudson.model.DirectoryBrowserSupport.CSP=
+              networks:
+                - jenkins-net
+
+            sonarqube:
+              image: sonarqube:9-community
+              container_name: sonarqube
+              restart: unless-stopped
+              ports:
+                - "9000:9000"
+              environment:
+                - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+                - SONAR_JDBC_URL=jdbc:h2:tcp://sonarqube-db:9092/sonar
+              volumes:
+                - sonarqube_data:/opt/sonarqube/data
+                - sonarqube_extensions:/opt/sonarqube/extensions
+                - sonarqube_logs:/opt/sonarqube/logs
+              networks:
+                - jenkins-net
+
+          networks:
+            jenkins-net:
+              driver: bridge
+
+          volumes:
+            sonarqube_data:
+            sonarqube_extensions:
+            sonarqube_logs:
+        mode: '0644'
+
+    - name: Start Jenkins and SonarQube containers
+      shell: |
+        cd /opt/jenkins
+        docker compose down || true
+        docker compose up -d
+      register: compose_result
+
+    - name: Wait for Jenkins to start
+      wait_for:
+        port: "{{ jenkins_port }}"
+        host: 0.0.0.0
+        delay: 30
+        timeout: 300
+
+    - name: Wait for SonarQube to start
+      wait_for:
+        port: 9000
+        host: 0.0.0.0
+        delay: 30
+        timeout: 300
+
+    - name: Check if Jenkins is already configured
+      stat:
+        path: "{{ jenkins_home }}/config.xml"
+      register: jenkins_configured
+
+    - name: Get Jenkins initial admin password
+      shell: |
+        timeout 60 sh -c 'until [ -f {{ jenkins_home }}/secrets/initialAdminPassword ]; do sleep 2; done'
+        cat {{ jenkins_home }}/secrets/initialAdminPassword
+      register: admin_password
+      when: not jenkins_configured.stat.exists
+
+    - name: Create Jenkins init script
+      copy:
+        dest: /opt/jenkins/init-jenkins.groovy
+        content: |
+          import jenkins.model.*
+          import hudson.security.*
+          import hudson.util.*
+          import jenkins.install.*
+
+          def instance = Jenkins.getInstance()
+
+          // Create admin user
+          def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+          hudsonRealm.createAccount("{{ jenkins_admin_user }}", "{{ jenkins_admin_password }}")
+          instance.setSecurityRealm(hudsonRealm)
+
+          // Configure authorization
+          def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+          strategy.setAllowAnonymousRead(false)
+          instance.setAuthorizationStrategy(strategy)
+
+          // Skip setup wizard
+          instance.setInstallState(InstallState.INITIAL_SETUP_COMPLETED)
+
+          instance.save()
+        mode: '0644'
+      when: not jenkins_configured.stat.exists
+
+    - name: Display Jenkins access information
+      debug:
+        msg:
+          - "=================================================="
+          - "Jenkins is ready!"
+          - "Jenkins URL: http://{{ ansible_host }}:{{ jenkins_port }}"
+          - "SonarQube URL: http://{{ ansible_host }}:9000"
+          - "{% if not jenkins_configured.stat.exists %}Initial Admin Password: {{ admin_password.stdout }}{% endif %}"
+          - "Admin User: {{ jenkins_admin_user }}"
+          - "Admin Password: {{ jenkins_admin_password }}"
+          - "=================================================="

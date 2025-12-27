@@ -1,0 +1,93 @@
+# Card Approval API Configuration
+image:
+  repository: us-east1-docker.pkg.dev/product-recsys-mlops/product-recsys-mlops-recsys/card-approval-api
+  tag: "latest"
+  pullPolicy: Always
+
+# Number of replicas (can be overridden by HPA)
+replicaCount: 2
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# Resource limits
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# Application configuration
+config:
+  appName: "Card Approval API"
+  appVersion: "1.0.0"
+  logLevel: "INFO"
+  modelName: "card_approval_model"
+  modelStage: "Production"
+
+# MLflow connection (points to existing recsys-training MLflow)
+mlflow:
+  trackingUri: "http://recsys-training-mlflow.recsys-training.svc.cluster.local:5000"
+
+# PostgreSQL connection
+postgres:
+  host: "card-approval-postgres"
+  port: 5432
+  database: "card_approval_db"
+  username: "app_user"
+  password: "app_password_change_me"  # TODO: Use secrets
+
+# Redis connection
+redis:
+  host: "card-approval-redis"
+  port: 6379
+
+# Health check configuration
+healthCheck:
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Workload Identity for GCS access (if needed)
+serviceAccount:
+  create: true
+  name: card-approval-api-sa
+  annotations:
+    # Link to GCP SA if needed for model access
+    iam.gke.io/gcp-service-account: ""
+
+# Ingress configuration (optional)
+ingress:
+  enabled: false
+  className: "nginx"
+  host: "card-approval-api.example.com"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Prometheus monitoring
+monitoring:
+  enabled: true
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
