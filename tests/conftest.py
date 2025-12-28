@@ -25,18 +25,6 @@ def mock_mlflow():
 
 
 @pytest.fixture(scope="session")
-def mock_redis():
-    """Mock Redis client."""
-    with patch("redis.from_url") as mock_redis:
-        mock_client = MagicMock()
-        mock_client.ping.return_value = True
-        mock_client.get.return_value = None
-        mock_client.set.return_value = True
-        mock_redis.return_value = mock_client
-        yield mock_client
-
-
-@pytest.fixture(scope="session")
 def mock_database():
     """Mock database connection."""
     with patch("sqlalchemy.create_engine") as mock_engine:
@@ -47,12 +35,11 @@ def mock_database():
 
 
 @pytest.fixture
-def client(mock_mlflow, mock_redis, mock_database):
+def client(mock_mlflow, mock_database):
     """Create test client with mocked dependencies."""
     # Set environment variables for testing
     os.environ["MLFLOW_TRACKING_URI"] = "http://localhost:5000"
     os.environ["DATABASE_URL"] = "postgresql://test:test@localhost:5432/test"
-    os.environ["REDIS_URL"] = "redis://localhost:6379/0"
     os.environ["MODEL_NAME"] = "card_approval_model"
     os.environ["MODEL_STAGE"] = "Production"
 

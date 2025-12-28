@@ -18,7 +18,7 @@ class TestHealthCheck:
         response = client.get("/health")
         data = response.json()
 
-        required_fields = ["status", "version", "mlflow_connected", "database_connected", "redis_connected"]
+        required_fields = ["status", "version", "mlflow_connected", "database_connected"]
         for field in required_fields:
             assert field in data, f"Missing field: {field}"
 
@@ -37,7 +37,6 @@ class TestHealthCheck:
 
         assert isinstance(data["mlflow_connected"], bool)
         assert isinstance(data["database_connected"], bool)
-        assert isinstance(data["redis_connected"], bool)
 
 
 class TestHealthDegraded:
@@ -53,12 +52,6 @@ class TestHealthDegraded:
     def test_health_with_database_down(self, client):
         """Test health when database is unavailable."""
         with patch("app.routers.health.check_database_connection", return_value=False):
-            response = client.get("/health")
-            assert response.status_code == 200
-
-    def test_health_with_redis_down(self, client):
-        """Test health when Redis is unavailable."""
-        with patch("app.routers.health.check_redis_connection", return_value=False):
             response = client.get("/health")
             assert response.status_code == 200
 
@@ -96,7 +89,6 @@ class TestReadiness:
         response = client.get("/health")
         data = response.json()
 
-        # Should check all three services
+        # Should check core services
         assert "mlflow_connected" in data
         assert "database_connected" in data
-        assert "redis_connected" in data

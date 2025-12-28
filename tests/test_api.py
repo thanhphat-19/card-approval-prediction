@@ -61,7 +61,6 @@ class TestHealthEndpoint:
         # These fields should exist (even if false due to mocking)
         assert "mlflow_connected" in data
         assert "database_connected" in data
-        assert "redis_connected" in data
 
 
 class TestDocsEndpoint:
