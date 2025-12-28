@@ -21,6 +21,9 @@ pipeline {
 
         // SonarQube
         SONAR_PROJECT_KEY = 'card-approval-prediction'
+        // Note: Jenkins runs in Docker, volume mounts use host paths
+        // The host has workspace at /workspace/card-approval-prediction
+        DOCKER_WORKDIR = 'card-approval-prediction'
     }
 
     stages {
@@ -50,21 +53,15 @@ pipeline {
                 stage('Unit Tests') {
                     steps {
                         sh '''
-                        echo "=== DEBUG: Jenkins workspace contents ==="
-                        echo "WORKSPACE=$WORKSPACE"
-                        ls -la $WORKSPACE
-                        echo "=== DEBUG: Running Docker container ==="
                         docker run --rm \
                           -v $WORKSPACE:/workspace \
-                          -w /workspace \
+                          -w /workspace/${DOCKER_WORKDIR} \
                           python:3.10-slim \
                           bash -c "
-                            echo '=== DEBUG: Container /workspace contents ===' &&
-                            ls -la /workspace &&
                             pip install --upgrade pip &&
                             pip install -r requirements.txt &&
                             pip install pytest pytest-cov &&
-                            export PYTHONPATH=/workspace &&
+                            export PYTHONPATH=/workspace/${DOCKER_WORKDIR} &&
                             pytest tests \
                               --cov=app \
                               --cov=cap_model \
@@ -72,7 +69,7 @@ pipeline {
                               --junitxml=test-results/pytest.xml
                           "
                         '''
-                        junit 'test-results/*.xml'
+                        junit "${DOCKER_WORKDIR}/test-results/*.xml"
                     }
                 }
 
@@ -81,11 +78,11 @@ pipeline {
                         sh '''
                         docker run --rm \
                           -v $WORKSPACE:/workspace \
-                          -w /workspace \
+                          -w /workspace/${DOCKER_WORKDIR} \
                           python:3.10-slim \
                           bash -c "
                             pip install flake8 pylint black isort &&
-                            export PYTHONPATH=/workspace &&
+                            export PYTHONPATH=/workspace/${DOCKER_WORKDIR} &&
                             flake8 app cap_model || true &&
                             pylint app cap_model || true &&
                             black --check app cap_model || true &&
@@ -113,7 +110,7 @@ pipeline {
                     sh '''
                     docker run --rm \
                       -v $WORKSPACE:/usr/src \
-                      -w /usr/src \
+                      -w /usr/src/${DOCKER_WORKDIR} \
                       sonarsource/sonar-scanner-cli \
                       sonar-scanner \
                         -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
