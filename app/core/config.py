@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # PostgreSQL credentials
     POSTGRES_DB: str = "mlflow"
     POSTGRES_USER: str = "mlflow"
-    POSTGRES_PASSWORD: str = "thanhphat192001"
+    POSTGRES_PASSWORD: str = ""  # Set via environment variable
 
     # MLflow
     MLFLOW_TRACKING_URI: str = "http://127.0.0.1:5000"

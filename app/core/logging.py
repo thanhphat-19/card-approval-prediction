@@ -32,7 +32,3 @@ def setup_logging():
     )
 
     logger.info(f"Logging configured: level={settings.LOG_LEVEL}, file={settings.LOG_FILE}")
-
-
-# Initialize logging on import
-setup_logging()
