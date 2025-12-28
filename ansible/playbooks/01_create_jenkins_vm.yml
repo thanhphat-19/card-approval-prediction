@@ -2,10 +2,12 @@
 - name: Create Jenkins VM on Google Cloud Platform
   hosts: localhost
   gather_facts: no
+  vars_files:
+    - ../group_vars/all.yml
   vars:
     instance_name: jenkins-server
     machine_type: n2-standard-4
-    disk_size: 100
+    disk_size: 10
     image_family: ubuntu-2204-lts
     image_project: ubuntu-os-cloud
 
@@ -47,6 +49,17 @@
           --format="value(name)" 2>/dev/null || echo ""
       register: existing_instance
 
+    - name: Create startup script file
+      copy:
+        content: |
+          #!/bin/bash
+          apt-get update
+          apt-get install -y ca-certificates curl gnupg
+          echo "VM initialization complete" > /tmp/startup-complete.txt
+        dest: /tmp/jenkins-startup.sh
+        mode: '0755'
+      when: existing_instance.stdout == ""
+
     - name: Create GCE instance for Jenkins
       shell: |
         gcloud compute instances create {{ instance_name }} \
@@ -59,10 +72,7 @@
           --create-disk=auto-delete=yes,boot=yes,device-name={{ instance_name }},image-project={{ image_project }},image-family={{ image_family }},mode=rw,size={{ disk_size }},type=pd-standard \
           --tags=jenkins-server,http-server,https-server \
           --metadata=ssh-keys="ubuntu:{{ lookup('file', '~/.ssh/gcp-jenkins-key.pub') }}" \
-          --metadata=startup-script='#!/bin/bash
-            apt-get update
-            apt-get install -y ca-certificates curl gnupg
-            echo "VM initialization complete" > /tmp/startup-complete.txt'
+          --metadata-from-file=startup-script=/tmp/jenkins-startup.sh
       when: existing_instance.stdout == ""
       register: instance_creation
 

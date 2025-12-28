@@ -2,6 +2,8 @@
 - name: Configure Jenkins with Plugins and Credentials
   hosts: jenkins
   become: yes
+  vars_files:
+    - ../group_vars/all.yml
   vars:
     jenkins_url: "http://localhost:{{ jenkins_port }}"
     jenkins_cli_jar: "/opt/jenkins/jenkins-cli.jar"
