@@ -33,7 +33,7 @@ class TestPredictEndpoint:
         data = response.json()
 
         assert "decision" in data
-        assert data["decision"] in ["Approved", "Rejected"]
+        assert data["decision"] in ["APPROVED", "REJECTED"]
 
     def test_predict_returns_confidence(self, client, sample_prediction_input):
         """Test prediction endpoint returns confidence score."""
@@ -56,9 +56,9 @@ class TestPredictEndpoint:
         data = response.json()
 
         if data["prediction"] == 1:
-            assert data["decision"] == "Approved"
+            assert data["decision"] == "APPROVED"
         else:
-            assert data["decision"] == "Rejected"
+            assert data["decision"] == "REJECTED"
 
 
 class TestPredictValidation:
