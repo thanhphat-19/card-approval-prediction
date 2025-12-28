@@ -143,6 +143,7 @@ pipeline {
                           --region ${REGION} \
                           --project ${PROJECT_ID} &&
                         curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash &&
+                        helm dependency build /deploy/helm-charts/card-approval &&
                         helm upgrade --install card-approval \
                           /deploy/helm-charts/card-approval \
                           --namespace ${GKE_NAMESPACE} \
