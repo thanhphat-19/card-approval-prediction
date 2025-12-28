@@ -8,9 +8,6 @@ pipeline {
     }
 
     environment {
-        // Repo
-        PROJECT_ROOT = 'card-approval-prediction'
-
         // GCP
         PROJECT_ID    = 'product-recsys-mlops'
         REGION        = 'us-east1'
@@ -55,12 +52,12 @@ pipeline {
                         sh '''
                         docker run --rm \
                           -v $WORKSPACE:/workspace \
-                          -w /workspace/${PROJECT_ROOT} \
+                          -w /workspace \
                           python:3.10-slim \
                           bash -c "
                             pip install -r requirements.txt &&
                             pip install pytest pytest-cov &&
-                            export PYTHONPATH=$(pwd) &&
+                            export PYTHONPATH=/workspace &&
                             pytest tests \
                               --cov=app \
                               --cov=cap_model \
@@ -77,11 +74,11 @@ pipeline {
                         sh '''
                         docker run --rm \
                           -v $WORKSPACE:/workspace \
-                          -w /workspace/${PROJECT_ROOT} \
+                          -w /workspace \
                           python:3.10-slim \
                           bash -c "
                             pip install flake8 pylint black isort &&
-                            export PYTHONPATH=$(pwd) &&
+                            export PYTHONPATH=/workspace &&
                             flake8 app cap_model || true &&
                             pylint app cap_model || true &&
                             black --check app cap_model || true &&
@@ -108,7 +105,7 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
                     docker run --rm \
-                      -v $WORKSPACE/${PROJECT_ROOT}:/usr/src \
+                      -v $WORKSPACE:/usr/src \
                       -w /usr/src \
                       sonarsource/sonar-scanner-cli \
                       sonar-scanner \
@@ -141,8 +138,7 @@ pipeline {
                 docker build \
                   -t ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG} \
                   -t ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:latest \
-                  -f ${PROJECT_ROOT}/Dockerfile \
-                  ${PROJECT_ROOT}
+                  -f Dockerfile .
                 '''
 
                 sh '''
@@ -188,7 +184,7 @@ pipeline {
                       --project ${PROJECT_ID}
 
                     helm upgrade --install card-approval \
-                      ./card-approval-prediction/helm-charts/card-approval \
+                      ./helm-charts/card-approval \
                       --namespace ${GKE_NAMESPACE} \
                       --create-namespace \
                       --set api.image.tag=${IMAGE_TAG} \
