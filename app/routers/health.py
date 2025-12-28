@@ -1,5 +1,7 @@
+"""Health check API endpoints."""
 from datetime import datetime
 
+import mlflow
 from fastapi import APIRouter
 from loguru import logger
 
@@ -25,13 +27,11 @@ async def health_check():
     # Check MLflow connection
     mlflow_connected = False
     try:
-        import mlflow
-
         mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
         mlflow.search_experiments(max_results=1)
         mlflow_connected = True
         logger.debug("MLflow connection: OK")
-    except Exception as e:
+    except (ConnectionError, mlflow.exceptions.MlflowException) as e:
         logger.warning(f"MLflow connection failed: {e}")
 
     # Determine overall status

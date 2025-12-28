@@ -8,13 +8,13 @@ import yaml
 
 def load_config(config_path: str) -> dict:
     """Load YAML configuration file"""
-    with open(config_path, "r") as f:
+    with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def save_config(config: dict, output_path: str):
     """Save configuration to YAML file"""
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         yaml.dump(config, f, default_flow_style=False)
 
 

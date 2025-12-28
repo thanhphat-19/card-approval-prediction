@@ -20,7 +20,9 @@ from sklearn.metrics import (
 )
 
 
-def plot_confusion_matrix(y_true: pd.Series, y_pred: np.ndarray, save_path: Optional[str] = None) -> plt.Figure:
+def plot_confusion_matrix(
+    y_true: pd.Series, y_pred: np.ndarray, save_path: Optional[str] = None
+) -> plt.Figure:
     """
     Plot confusion matrix
 
@@ -57,7 +59,9 @@ def plot_confusion_matrix(y_true: pd.Series, y_pred: np.ndarray, save_path: Opti
     return fig
 
 
-def plot_roc_curve(y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optional[str] = None) -> plt.Figure:
+def plot_roc_curve(
+    y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optional[str] = None
+) -> plt.Figure:
     """
     Plot ROC curve
 
@@ -69,7 +73,7 @@ def plot_roc_curve(y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optio
     Returns:
         Matplotlib figure
     """
-    fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
+    fpr, tpr, _ = roc_curve(y_true, y_pred_proba)
     roc_auc = roc_auc_score(y_true, y_pred_proba)
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -106,7 +110,7 @@ def plot_precision_recall_curve(
     Returns:
         Matplotlib figure
     """
-    precision, recall, thresholds = precision_recall_curve(y_true, y_pred_proba)
+    precision, recall, _ = precision_recall_curve(y_true, y_pred_proba)
 
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.plot(recall, precision, color="#764ba2", lw=3, label="Precision-Recall Curve")
@@ -127,7 +131,9 @@ def plot_precision_recall_curve(
     return fig
 
 
-def plot_threshold_analysis(y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optional[str] = None) -> plt.Figure:
+def plot_threshold_analysis(
+    y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optional[str] = None
+) -> plt.Figure:
     """
     Plot metrics vs threshold
 

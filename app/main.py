@@ -1,3 +1,4 @@
+"""FastAPI application for Credit Card Approval Prediction."""
 import time
 from contextlib import asynccontextmanager
 
@@ -7,7 +8,12 @@ from loguru import logger
 
 from app.core.config import get_settings
 from app.core.logging import setup_logging
-from app.core.metrics import ACTIVE_REQUESTS, REQUEST_DURATION, metrics_endpoint, track_request_metrics
+from app.core.metrics import (
+    ACTIVE_REQUESTS,
+    REQUEST_DURATION,
+    metrics_endpoint,
+    track_request_metrics,
+)
 from app.routers import health, predict
 
 # Setup
@@ -16,7 +22,7 @@ settings = get_settings()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Lifespan events for startup and shutdown"""
     # Startup
     logger.info(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
@@ -61,9 +67,15 @@ async def track_requests(request: Request, call_next):
         duration = time.time() - start_time
 
         # Track metrics
-        track_request_metrics(method=request.method, endpoint=request.url.path, status_code=response.status_code)
-
-        REQUEST_DURATION.labels(method=request.method, endpoint=request.url.path).observe(duration)
+        track_request_metrics(
+            method=request.method,
+            endpoint=request.url.path,
+            status_code=response.status_code,
+        )
+        REQUEST_DURATION.labels(
+            method=request.method,
+            endpoint=request.url.path,
+        ).observe(duration)
 
         return response
     finally:

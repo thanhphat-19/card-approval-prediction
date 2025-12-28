@@ -1,3 +1,4 @@
+"""Prediction API endpoints."""
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
@@ -23,7 +24,10 @@ async def predict(
 
         # Predict
         prediction_result = model_service.predict(df_processed)
-        prediction = int(prediction_result[0]) if hasattr(prediction_result, "__iter__") else int(prediction_result)
+        if hasattr(prediction_result, "__iter__"):
+            prediction = int(prediction_result[0])
+        else:
+            prediction = int(prediction_result)
 
         # Format response
         # Label mapping from training:
@@ -41,7 +45,7 @@ async def predict(
 
     except Exception as e:
         logger.error(f"Prediction failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}") from e
 
 
 @router.post("/reload-model")
@@ -56,10 +60,14 @@ async def reload_model(model_service: ModelService = Depends(get_model_service))
         model_service.reload_model()
         model_info = model_service.get_model_info()
 
-        return {"status": "success", "message": "Model reloaded successfully", "model_info": model_info}
+        return {
+            "status": "success",
+            "message": "Model reloaded successfully",
+            "model_info": model_info,
+        }
     except Exception as e:
         logger.error(f"Model reload failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Model reload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Model reload failed: {str(e)}") from e
 
 
 @router.get("/model-info")

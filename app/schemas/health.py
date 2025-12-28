@@ -1,3 +1,4 @@
+"""Health check response schemas."""
 from datetime import datetime
 
 from pydantic import BaseModel
