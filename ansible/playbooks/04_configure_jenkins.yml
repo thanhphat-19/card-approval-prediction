@@ -66,25 +66,21 @@
       register: plugin_install
       ignore_errors: yes
 
-    - name: Create GCP service account key file
-      copy:
-        dest: /opt/jenkins/gcp-key.json
-        content: |
-          {
-            "type": "service_account",
-            "project_id": "{{ gcp_project_id }}",
-            "private_key_id": "YOUR_KEY_ID",
-            "private_key": "YOUR_PRIVATE_KEY",
-            "client_email": "jenkins@{{ gcp_project_id }}.iam.gserviceaccount.com",
-            "client_id": "YOUR_CLIENT_ID",
-            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-            "token_uri": "https://oauth2.googleapis.com/token",
-            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/jenkins%40{{ gcp_project_id }}.iam.gserviceaccount.com"
-          }
+    # NOTE: GCP service account key should be provided externally via:
+    # 1. Jenkins credentials (preferred) - store as 'gcp-service-account' file credential
+    # 2. Ansible Vault - encrypt and store in group_vars/vault.yml
+    # 3. External secret manager (HashiCorp Vault, GCP Secret Manager, etc.)
+    #
+    # DO NOT commit actual service account keys to version control.
+    # The Jenkinsfile uses 'gcp-service-account' credential ID to inject the key at runtime.
+    - name: Create placeholder for GCP service account key
+      file:
+        path: /opt/jenkins/gcp-key.json
+        state: touch
         mode: '0600'
         owner: 1000
         group: 1000
+      when: false  # Disabled - key should be provided via Jenkins credentials
 
     - name: Create Jenkins credentials script
       copy:
