@@ -50,11 +50,17 @@ pipeline {
                 stage('Unit Tests') {
                     steps {
                         sh '''
+                        echo "=== DEBUG: Jenkins workspace contents ==="
+                        echo "WORKSPACE=$WORKSPACE"
+                        ls -la $WORKSPACE
+                        echo "=== DEBUG: Running Docker container ==="
                         docker run --rm \
                           -v $WORKSPACE:/workspace \
                           -w /workspace \
                           python:3.10-slim \
                           bash -c "
+                            echo '=== DEBUG: Container /workspace contents ===' &&
+                            ls -la /workspace &&
                             pip install --upgrade pip &&
                             pip install -r requirements.txt &&
                             pip install pytest pytest-cov &&
