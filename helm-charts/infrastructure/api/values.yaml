@@ -39,7 +39,7 @@ postgres:
   port: 5432
   database: "card_approval_db"
   username: "app_user"
-  password: "app_password_change_me"  # TODO: Use secrets
+  password: "app_password_change_me"
 
 # Redis connection
 redis:

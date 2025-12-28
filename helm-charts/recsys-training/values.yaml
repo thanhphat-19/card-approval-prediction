@@ -11,7 +11,7 @@ postgres:
   # Override postgres chart values
   database: mlflow
   username: mlflow
-  password: thanhphat192001  # TODO: Change this!
+  password: thanhphat192001
 
   service:
     port: 5432
@@ -53,11 +53,10 @@ mlflow:
     port: 5432
     database: "mlflow"
     username: "mlflow"
-    password: "thanhphat192001"   # TODO: Change this!
+    password: "thanhphat192001"
 
   # GCS artifact storage
   gcs:
-    # TODO: Update with your bucket from: terraform output gcs_bucket
     bucket: "product-recsys-mlops-recsys-data"
     artifactPath: "mlflow-artifacts"
 
