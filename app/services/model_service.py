@@ -1,3 +1,4 @@
+"""Model service for loading and managing ML models from MLflow."""
 import os
 
 import mlflow
@@ -22,10 +23,12 @@ class ModelService:
             # Setup GCS authentication if credentials path is provided
             if self.settings.GOOGLE_APPLICATION_CREDENTIALS:
                 if os.path.exists(self.settings.GOOGLE_APPLICATION_CREDENTIALS):
-                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.settings.GOOGLE_APPLICATION_CREDENTIALS
-                    logger.info(f"Using GCS credentials from: {self.settings.GOOGLE_APPLICATION_CREDENTIALS}")
+                    creds_path = self.settings.GOOGLE_APPLICATION_CREDENTIALS
+                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
+                    logger.info(f"Using GCS credentials from: {creds_path}")
                 else:
-                    logger.warning(f"GCS credentials file not found: {self.settings.GOOGLE_APPLICATION_CREDENTIALS}")
+                    creds_path = self.settings.GOOGLE_APPLICATION_CREDENTIALS
+                    logger.warning(f"GCS credentials file not found: {creds_path}")
             else:
                 logger.info("No GCS credentials specified - using default authentication")
 
@@ -37,11 +40,14 @@ class ModelService:
             model_versions = client.search_model_versions(filter_string=filter_string)
 
             # Filter by stage and get the latest
-            stage_versions = [v for v in model_versions if v.current_stage == self.settings.MODEL_STAGE]
+            stage_versions = [
+                v for v in model_versions if v.current_stage == self.settings.MODEL_STAGE
+            ]
 
             if not stage_versions:
                 raise ValueError(
-                    f"No model version found for {self.settings.MODEL_NAME} in {self.settings.MODEL_STAGE} stage"
+                    f"No model version found for {self.settings.MODEL_NAME} "
+                    f"in {self.settings.MODEL_STAGE} stage"
                 )
 
             # Sort by version number (descending) and get the latest
@@ -58,7 +64,7 @@ class ModelService:
 
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
-            raise RuntimeError(f"Model loading failed: {e}")
+            raise RuntimeError(f"Model loading failed: {e}") from e
 
     def predict(self, features):
         """Make prediction with loaded model"""
@@ -89,15 +95,15 @@ class ModelService:
 
 
 # Global instance (will be initialized on app startup)
-model_service = None
+_model_service = None
 
 
 def get_model_service() -> ModelService:
     """Get or create model service instance"""
-    global model_service
-    if model_service is None:
+    global _model_service  # pylint: disable=global-statement
+    if _model_service is None:
         logger.info("Initializing model service")
-        model_service = ModelService()
+        _model_service = ModelService()
     else:
         logger.debug("Reusing cached model service")
-    return model_service
+    return _model_service

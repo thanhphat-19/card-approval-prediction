@@ -13,18 +13,38 @@ REGISTRY = CollectorRegistry()
 
 # Define metrics
 REQUEST_COUNT = Counter(
-    "fastapi_requests_total", "Total number of requests", ["method", "endpoint", "status"], registry=REGISTRY
+    "fastapi_requests_total",
+    "Total number of requests",
+    ["method", "endpoint", "status"],
+    registry=REGISTRY,
 )
 
 REQUEST_DURATION = Histogram(
-    "fastapi_request_duration_seconds", "Request duration in seconds", ["method", "endpoint"], registry=REGISTRY
+    "fastapi_request_duration_seconds",
+    "Request duration in seconds",
+    ["method", "endpoint"],
+    registry=REGISTRY,
 )
 
-PREDICTION_COUNT = Counter("predictions_total", "Total number of predictions", ["result"], registry=REGISTRY)
+PREDICTION_COUNT = Counter(
+    "predictions_total",
+    "Total number of predictions",
+    ["result"],
+    registry=REGISTRY,
+)
 
-PREDICTION_DURATION = Histogram("prediction_duration_seconds", "Prediction duration in seconds", registry=REGISTRY)
+PREDICTION_DURATION = Histogram(
+    "prediction_duration_seconds",
+    "Prediction duration in seconds",
+    registry=REGISTRY,
+)
 
-MODEL_VERSION = Gauge("model_version_info", "Current model version", ["version", "stage"], registry=REGISTRY)
+MODEL_VERSION = Gauge(
+    "model_version_info",
+    "Current model version",
+    ["version", "stage"],
+    registry=REGISTRY,
+)
 
 ACTIVE_REQUESTS = Gauge("active_requests", "Number of active requests", registry=REGISTRY)
 

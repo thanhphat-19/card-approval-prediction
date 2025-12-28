@@ -32,17 +32,17 @@ class PreprocessingService:
         scaler = joblib.load(local_path / "scaler.pkl")
         pca = joblib.load(local_path / "pca.pkl")
 
-        with open(local_path / "feature_names.json", "r") as f:
+        with open(local_path / "feature_names.json", "r", encoding="utf-8") as f:
             feature_names = json.load(f)["feature_names"]
 
         return scaler, pca, feature_names
 
-    def align_features(self, X: pd.DataFrame, reference_columns: List[str]) -> pd.DataFrame:
+    def align_features(self, features: pd.DataFrame, reference_columns: List[str]) -> pd.DataFrame:
         """Align DataFrame features with reference columns"""
         for col in reference_columns:
-            if col not in X.columns:
-                X[col] = 0
-        return X[reference_columns]
+            if col not in features.columns:
+                features[col] = 0
+        return features[reference_columns]
 
     def preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
         """Preprocess input for model prediction: encode → align → scale → PCA"""
@@ -63,16 +63,17 @@ class PreprocessingService:
         df_pca = self.pca.transform(df_scaled)
 
         # Return as DataFrame with PC column names
-        return pd.DataFrame(df_pca, columns=[f"PC{i+1}" for i in range(df_pca.shape[1])], index=df.index)
+        pc_columns = [f"PC{i+1}" for i in range(df_pca.shape[1])]
+        return pd.DataFrame(df_pca, columns=pc_columns, index=df.index)
 
 
 # Global instance (will be initialized lazily)
-preprocessing_service = None
+_preprocessing_service = None
 
 
 def get_preprocessing_service(run_id: Optional[str] = None) -> PreprocessingService:
     """Get or create preprocessing service instance"""
-    global preprocessing_service
-    if preprocessing_service is None or (run_id and preprocessing_service.run_id != run_id):
-        preprocessing_service = PreprocessingService(run_id)
-    return preprocessing_service
+    global _preprocessing_service  # pylint: disable=global-statement
+    if _preprocessing_service is None or (run_id and _preprocessing_service.run_id != run_id):
+        _preprocessing_service = PreprocessingService(run_id)
+    return _preprocessing_service
