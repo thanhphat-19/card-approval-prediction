@@ -240,11 +240,18 @@ cap_model/data/raw/
 cap_model/models/*.pkl
 cap_model/models/*.json
 cap_model/outputs/
+cap_model/data/processed/
+cap_model/preprocessors/
+cap_model/models/evaluation
 catboost_info/
 *.csv.gz
+
 
 # Keep these json files
 !pyproject.json
 !package.json
 !tsconfig.json
 !cap_model/data/processed/feature_names.json
+
+# Secrets folder
+secrets/

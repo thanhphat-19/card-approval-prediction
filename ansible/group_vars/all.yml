@@ -1,0 +1,24 @@
+# Global variables for all hosts
+
+# GCP Configuration
+gcp_project_id: ""
+gcp_region: ""
+gcp_zone: ""
+
+# Jenkins Configuration
+jenkins_port:
+jenkins_admin_user: ""
+jenkins_admin_password: ""  # Change this in production
+jenkins_home: "/var/jenkins_home"
+
+# Docker Registry
+docker_registry: ""
+docker_repository: ""
+
+# SonarQube Configuration
+sonarqube_url: ""
+sonarqube_token: ""  # Will be set after SonarQube setup
+
+# GitHub Configuration
+github_repo: ""
+github_branch: ""

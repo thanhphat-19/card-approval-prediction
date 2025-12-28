@@ -132,6 +132,3 @@ By completing this project, you will learn:
 - Best practices for MLOps
 
 ---
-
-**🚀 Ready to start? Head to [docs/03_NEXT_STEPS_QUICKSTART.md](./docs/03_NEXT_STEPS_QUICKSTART.md)!**
-

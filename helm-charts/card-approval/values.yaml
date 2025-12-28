@@ -11,7 +11,7 @@ postgres:
   # Database configuration
   database: card_approval_db
   username: app_user
-  password: phatngothanh19  # TODO: Use Kubernetes secrets!
+  password: phatngothanh19
 
   service:
     port: 5432
@@ -98,7 +98,7 @@ api:
     port: 5432
     database: "card_approval_db"
     username: "app_user"
-    password: "phatngothanh19"  # TODO: Match above!
+    password: "phatngothanh19"
 
   # Redis connection (matches redis config above)
   redis:

@@ -1,0 +1,7 @@
+---
+# Main playbook to deploy complete Jenkins setup
+
+- import_playbook: playbooks/01_create_jenkins_vm.yml
+- import_playbook: playbooks/02_install_docker.yml
+- import_playbook: playbooks/03_deploy_jenkins.yml
+- import_playbook: playbooks/04_configure_jenkins.yml

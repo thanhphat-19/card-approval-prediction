@@ -1,0 +1,20 @@
+{
+  "ID": 5008804,
+  "CODE_GENDER": "M",
+  "FLAG_OWN_CAR": "Y",
+  "FLAG_OWN_REALTY": "Y",
+  "CNT_CHILDREN": 0,
+  "AMT_INCOME_TOTAL": 180000.0,
+  "NAME_INCOME_TYPE": "Working",
+  "NAME_EDUCATION_TYPE": "Higher education",
+  "NAME_FAMILY_STATUS": "Married",
+  "NAME_HOUSING_TYPE": "House / apartment",
+  "DAYS_BIRTH": -14000,
+  "DAYS_EMPLOYED": -2500,
+  "FLAG_MOBIL": 1,
+  "FLAG_WORK_PHONE": 0,
+  "FLAG_PHONE": 1,
+  "FLAG_EMAIL": 0,
+  "OCCUPATION_TYPE": "Managers",
+  "CNT_FAM_MEMBERS": 2.0
+}

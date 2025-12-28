@@ -2,7 +2,7 @@
 
 terraform {
   required_version = ">= 1.6.0"
-  
+
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -22,10 +22,10 @@ provider "google" {
 resource "google_container_cluster" "primary" {
   name     = "${var.project_id}-gke"
   location = var.region
-  
+
   # Enable Autopilot mode (no node management, pay per pod)
   enable_autopilot = true
-  
+
 }
 
 # ============================================
@@ -37,9 +37,9 @@ resource "google_storage_bucket" "data" {
   name          = "${var.project_id}-recsys-data"
   location      = var.region
   force_destroy = true  # Allow deletion for dev
-  
+
   uniform_bucket_level_access = true
-  
+
   # Lifecycle rule to reduce costs
   lifecycle_rule {
     condition {
