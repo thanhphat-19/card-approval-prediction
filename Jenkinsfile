@@ -63,7 +63,7 @@ pipeline {
                     echo '=== Black ===' &&
                     black --check app cap_model || true &&
                     echo '=== Isort ===' &&
-                    isort --check-only app cap_model || true
+                    isort --check-only --skip-gitignore app cap_model || true
                   "
                 '''
             }
@@ -84,10 +84,12 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
                     # Use tar to pipe code into container (workaround for DinD volume mount issues)
+                    # Use --network host so container can reach SonarQube at localhost:9000
                     tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
                     docker run --rm -i \
+                      --network host \
                       -w /usr/src \
-                      -e SONAR_HOST_URL=${SONAR_HOST_URL} \
+                      -e SONAR_HOST_URL=http://localhost:9000 \
                       -e SONAR_TOKEN=${SONAR_AUTH_TOKEN} \
                       sonarsource/sonar-scanner-cli \
                       bash -c "
