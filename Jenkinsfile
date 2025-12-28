@@ -21,9 +21,6 @@ pipeline {
 
         // SonarQube
         SONAR_PROJECT_KEY = 'card-approval-prediction'
-        // Note: Jenkins runs in Docker, volume mounts use host paths
-        // The host has workspace at /workspace/card-approval-prediction
-        DOCKER_WORKDIR = 'card-approval-prediction'
     }
 
     stages {
@@ -53,39 +50,49 @@ pipeline {
                 stage('Unit Tests') {
                     steps {
                         sh '''
-                        docker run --rm \
-                          -v $WORKSPACE:/workspace \
-                          -w /workspace/${DOCKER_WORKDIR} \
+                        # Use tar to pipe code into container (workaround for DinD volume mount issues)
+                        tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
+                        docker run --rm -i \
+                          -w /workspace \
                           python:3.10-slim \
                           bash -c "
+                            tar xf - &&
                             pip install --upgrade pip &&
                             pip install -r requirements.txt &&
                             pip install pytest pytest-cov &&
-                            export PYTHONPATH=/workspace/${DOCKER_WORKDIR} &&
+                            export PYTHONPATH=/workspace &&
+                            mkdir -p test-results &&
                             pytest tests \
                               --cov=app \
                               --cov=cap_model \
                               --cov-report=xml:coverage.xml \
-                              --junitxml=test-results/pytest.xml
+                              --cov-report=term \
+                              --junitxml=test-results/pytest.xml \
+                              -v
                           "
                         '''
-                        junit "${DOCKER_WORKDIR}/test-results/*.xml"
                     }
                 }
 
                 stage('Linting') {
                     steps {
                         sh '''
-                        docker run --rm \
-                          -v $WORKSPACE:/workspace \
-                          -w /workspace/${DOCKER_WORKDIR} \
+                        # Use tar to pipe code into container (workaround for DinD volume mount issues)
+                        tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
+                        docker run --rm -i \
+                          -w /workspace \
                           python:3.10-slim \
                           bash -c "
+                            tar xf - &&
                             pip install flake8 pylint black isort &&
-                            export PYTHONPATH=/workspace/${DOCKER_WORKDIR} &&
+                            export PYTHONPATH=/workspace &&
+                            echo '=== Flake8 ===' &&
                             flake8 app cap_model || true &&
-                            pylint app cap_model || true &&
+                            echo '=== Pylint ===' &&
+                            pylint app cap_model --exit-zero &&
+                            echo '=== Black ===' &&
                             black --check app cap_model || true &&
+                            echo '=== Isort ===' &&
                             isort --check-only app cap_model || true
                           "
                         '''
@@ -108,16 +115,22 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
-                    docker run --rm \
-                      -v $WORKSPACE:/usr/src \
-                      -w /usr/src/${DOCKER_WORKDIR} \
+                    # Use tar to pipe code into container (workaround for DinD volume mount issues)
+                    tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
+                    docker run --rm -i \
+                      -w /usr/src \
+                      -e SONAR_HOST_URL=${SONAR_HOST_URL} \
+                      -e SONAR_TOKEN=${SONAR_AUTH_TOKEN} \
                       sonarsource/sonar-scanner-cli \
-                      sonar-scanner \
-                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                        -Dsonar.sources=app,cap_model \
-                        -Dsonar.tests=tests \
-                        -Dsonar.python.coverage.reportPaths=coverage.xml \
-                        -Dsonar.python.xunit.reportPath=test-results/*.xml
+                      bash -c "
+                        tar xf - &&
+                        sonar-scanner \
+                          -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                          -Dsonar.sources=app,cap_model \
+                          -Dsonar.tests=tests \
+                          -Dsonar.python.coverage.reportPaths=coverage.xml \
+                          -Dsonar.python.xunit.reportPath=test-results/*.xml
+                      "
                     '''
                 }
             }
