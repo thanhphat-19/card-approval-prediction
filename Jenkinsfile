@@ -11,7 +11,7 @@ pipeline {
         // GCP
         PROJECT_ID    = 'product-recsys-mlops'
         REGION        = 'us-east1'
-        GKE_CLUSTER   = 'mlops-cluster'
+        GKE_CLUSTER   = 'product-recsys-mlops-gke'
         GKE_NAMESPACE = 'card-approval'
 
         // Docker
