@@ -99,8 +99,15 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
                     sh '''
-                    gcloud auth activate-service-account --key-file=$GCP_KEY
-                    gcloud auth configure-docker ${REGISTRY}
+                    docker run --rm \
+                      -v $GCP_KEY:/gcp-key.json:ro \
+                      -v /var/run/docker.sock:/var/run/docker.sock \
+                      -e GOOGLE_APPLICATION_CREDENTIALS=/gcp-key.json \
+                      google/cloud-sdk:slim \
+                      bash -c "
+                        gcloud auth activate-service-account --key-file=/gcp-key.json &&
+                        gcloud auth configure-docker ${REGISTRY} --quiet
+                      "
 
                     docker push ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}
                     docker push ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:latest
@@ -117,18 +124,27 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
                     sh '''
-                    gcloud auth activate-service-account --key-file=$GCP_KEY
-                    gcloud container clusters get-credentials ${GKE_CLUSTER} \
-                      --region ${REGION} \
-                      --project ${PROJECT_ID}
-
-                    helm upgrade --install card-approval \
-                      helm-charts/card-approval \
-                      --namespace ${GKE_NAMESPACE} \
-                      --create-namespace \
-                      --set api.image.tag=${IMAGE_TAG} \
-                      --wait \
-                      --atomic
+                    docker run --rm \
+                      -v $GCP_KEY:/gcp-key.json:ro \
+                      -v ${WORKSPACE}/helm-charts:/helm-charts:ro \
+                      -e GOOGLE_APPLICATION_CREDENTIALS=/gcp-key.json \
+                      -e USE_GKE_GCLOUD_AUTH_PLUGIN=True \
+                      google/cloud-sdk:slim \
+                      bash -c "
+                        gcloud auth activate-service-account --key-file=/gcp-key.json &&
+                        gcloud components install gke-gcloud-auth-plugin kubectl --quiet &&
+                        gcloud container clusters get-credentials ${GKE_CLUSTER} \
+                          --region ${REGION} \
+                          --project ${PROJECT_ID} &&
+                        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash &&
+                        helm upgrade --install card-approval \
+                          /helm-charts/card-approval \
+                          --namespace ${GKE_NAMESPACE} \
+                          --create-namespace \
+                          --set api.image.tag=${IMAGE_TAG} \
+                          --wait \
+                          --atomic
+                      "
                     '''
                 }
             }
