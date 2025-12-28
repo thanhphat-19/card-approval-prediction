@@ -135,11 +135,10 @@ pipeline {
 
                     tar cf - -C .tmp-deploy . | docker run --rm -i \
                       -e USE_GKE_GCLOUD_AUTH_PLUGIN=True \
-                      google/cloud-sdk:slim \
+                      google/cloud-sdk:latest \
                       bash -c "
                         mkdir -p /deploy && cd /deploy && tar xf - &&
                         gcloud auth activate-service-account --key-file=/deploy/gcp-key.json &&
-                        gcloud components install gke-gcloud-auth-plugin kubectl --quiet 2>/dev/null || true &&
                         gcloud container clusters get-credentials ${GKE_CLUSTER} \
                           --region ${REGION} \
                           --project ${PROJECT_ID} &&
