@@ -1,20 +1,28 @@
 pipeline {
-    agent { label 'docker' }
+    agent any
+
+    triggers {
+        // Only trigger on GitHub webhook
+        githubPush()
+    }
 
     options {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '10', daysToKeepStr: '30'))
         timeout(time: 1, unit: 'HOURS')
+        // Skip build if same commit already built
+        skipStagesAfterUnstable()
     }
 
     environment {
         // GCP
         PROJECT_ID    = 'product-recsys-mlops'
-        REGION        = 'us-east1'
-        GKE_CLUSTER   = 'product-recsys-mlops-gke'
+        ZONE          = 'us-east1-b'
+        GKE_CLUSTER   = 'card-approval-prediction-mlops-gke'
         GKE_NAMESPACE = 'card-approval'
 
         // Docker
+        REGION     = 'us-east1'
         REGISTRY   = "${REGION}-docker.pkg.dev"
         REPOSITORY = "${PROJECT_ID}/product-recsys-mlops-recsys"
         IMAGE_NAME = 'card-approval-api'
@@ -34,6 +42,31 @@ pipeline {
                         returnStdout: true
                     ).trim()
                     env.IMAGE_TAG = "${BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
+                    env.BRANCH_NAME = env.GIT_BRANCH?.replaceAll('origin/', '') ?: env.BRANCH_NAME ?: 'unknown'
+                }
+            }
+        }
+
+        /* =====================
+           SKIP MERGED BRANCHES
+        ====================== */
+        stage('Check Branch') {
+            steps {
+                script {
+                    // Only build main branch and active PR branches
+                    def validBranches = ['main', 'master', 'develop']
+                    def isPRBranch = env.BRANCH_NAME?.startsWith('PR-') ||
+                                     env.BRANCH_NAME?.startsWith('feature/') ||
+                                     env.BRANCH_NAME?.startsWith('fix/') ||
+                                     env.BRANCH_NAME?.startsWith('refactor/')
+
+                    if (!validBranches.contains(env.BRANCH_NAME) && !isPRBranch) {
+                        echo "⏭️ Skipping build for branch: ${env.BRANCH_NAME}"
+                        currentBuild.result = 'NOT_BUILT'
+                        error("Branch ${env.BRANCH_NAME} is not configured for CI. Skipping.")
+                    }
+
+                    echo "✅ Building branch: ${env.BRANCH_NAME}"
                 }
             }
         }
@@ -65,6 +98,7 @@ pipeline {
                 '''
             }
         }
+
 
         /* =====================
            BUILD IMAGE
@@ -140,7 +174,7 @@ pipeline {
                         mkdir -p /deploy && cd /deploy && tar xf - &&
                         gcloud auth activate-service-account --key-file=/deploy/gcp-key.json &&
                         gcloud container clusters get-credentials ${GKE_CLUSTER} \
-                          --region ${REGION} \
+                          --zone ${ZONE} \
                           --project ${PROJECT_ID} &&
                         curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash &&
                         helm dependency build /deploy/helm-charts/card-approval &&

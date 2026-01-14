@@ -17,15 +17,67 @@ provider "google" {
 }
 
 # ============================================
-# GKE Cluster (Autopilot - Minimal Cost)
+# GKE Cluster (Standard Mode)
 # ============================================
 resource "google_container_cluster" "primary" {
-  name     = "${var.project_id}-gke"
-  location = var.region
+  name     = "card-approval-prediction-mlops-gke"
+  location = "us-east1-b"  # Single zone to reduce quota usage
 
-  # Enable Autopilot mode (no node management, pay per pod)
-  enable_autopilot = true
+  # Standard mode (no enable_autopilot = removes default node pool pattern)
+  remove_default_node_pool = true
+  initial_node_count       = 1
 
+  # Workload Identity
+  workload_identity_config {
+    workload_pool = "${var.project_id}.svc.id.goog"
+  }
+
+  # Deletion protection - disable for dev
+  deletion_protection = false
+}
+
+# ============================================
+# GKE Node Pool (Standard Mode)
+# ============================================
+resource "google_container_node_pool" "primary_nodes" {
+  name       = "primary-node-pool"
+  location   = "us-east1-b"  # Single zone
+  cluster    = google_container_cluster.primary.name
+
+  # Start with 1 node, scale up to 2
+  initial_node_count = 1
+
+  autoscaling {
+    min_node_count = 1
+    max_node_count = 2
+  }
+
+  node_config {
+    # Use e2-standard-4 (4 vCPU, 16GB RAM) - good balance
+    machine_type = "e2-standard-4"
+    disk_size_gb = 30
+    disk_type    = "pd-standard"
+
+    # Enable Workload Identity
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
+
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+
+    labels = {
+      environment = "production"
+    }
+
+    tags = ["gke-node", "card-approval-prediction-mlops-gke"]
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = true
+  }
 }
 
 # ============================================
@@ -84,5 +136,5 @@ resource "google_storage_bucket_iam_member" "mlflow_storage_admin" {
 resource "google_service_account_iam_member" "mlflow_workload_identity" {
   service_account_id = google_service_account.mlflow.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${var.project_id}.svc.id.goog[recsys-training/mlflow-sa]"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[card-approval-training/mlflow-sa]"
 }

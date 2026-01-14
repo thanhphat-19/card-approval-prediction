@@ -10,7 +10,7 @@ echo "================================================"
 echo ""
 
 # Configuration
-CLUSTER_NAME="mlops-cluster"
+CLUSTER_NAME="product-recsys-mlops-gke"
 REGION="us-east1"
 JENKINS_VM="jenkins-server"
 JENKINS_ZONE="us-east1-b"
@@ -61,35 +61,17 @@ else
     echo "  Jenkins VM not found, skipping..."
 fi
 
-# Step 2: Restore cluster nodes
+# Step 2: Autopilot handles node scaling
 echo ""
-echo "Step 2: Adding cluster nodes..."
-echo "--------------------------------"
-echo "  Adding 3 nodes (this takes ~3-5 minutes)..."
+echo "Step 2: Autopilot cluster ready..."
+echo "-----------------------------------"
+echo "  GKE Autopilot will automatically provision nodes"
+echo "  when deployments are restored."
+echo -e "${GREEN}✓${NC} Autopilot ready"
+
+# Step 3: Restore deployments with Helm
 echo ""
-
-gcloud container clusters resize ${CLUSTER_NAME} \
-    --num-nodes=3 \
-    --region=${REGION} \
-    --project=${PROJECT_ID} \
-    --quiet
-
-echo -e "${GREEN}✓${NC} Nodes added to cluster"
-
-# Wait for nodes to be ready
-echo ""
-echo "Step 3: Waiting for nodes to be ready..."
-echo "-----------------------------------------"
-echo "  Checking node status..."
-
-sleep 45
-kubectl wait --for=condition=Ready nodes --all --timeout=300s || true
-
-echo -e "${GREEN}✓${NC} All nodes are ready"
-
-# Step 4: Restore deployments with Helm
-echo ""
-echo "Step 4: Restoring deployments..."
+echo "Step 3: Restoring deployments..."
 echo "---------------------------------"
 
 # Restore card-approval

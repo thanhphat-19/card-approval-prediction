@@ -2,7 +2,7 @@
 # This combines PostgreSQL and MLflow into a single deployment
 
 # Global namespace for all components
-namespace: recsys-training
+namespace: card-approval-training
 
 # PostgreSQL configuration
 postgres:
@@ -49,7 +49,7 @@ mlflow:
 
   # PostgreSQL connection (matches postgres config above)
   postgres:
-    host: "recsys-training-postgres"  # Will resolve to: {release-name}-postgres
+    host: "card-approval-training-postgres"  # Will resolve to: {release-name}-postgres
     port: 5432
     database: "mlflow"
     username: "mlflow"

@@ -17,6 +17,8 @@ async def predict(
 ):
     """Make credit card approval prediction"""
     try:
+        logger.info(f"Prediction request received for customer ID: {input_data.ID}")
+
         # Preprocess
         preprocessing_service = get_preprocessing_service(run_id=model_service.run_id)
         df = pd.DataFrame([input_data.model_dump()])
@@ -35,6 +37,11 @@ async def predict(
         # Label 0 = Bad credit (STATUS 1-5) → REJECTED
         decision = "APPROVED" if prediction == 1 else "REJECTED"
 
+        logger.info(
+            f"Prediction completed: customer_id={input_data.ID}, "
+            f"decision={decision}, income={input_data.AMT_INCOME_TOTAL}"
+        )
+
         return PredictionOutput(
             prediction=prediction,
             probability=float(prediction),  # Binary: 0.0 or 1.0
@@ -44,7 +51,7 @@ async def predict(
         )
 
     except Exception as e:
-        logger.error(f"Prediction failed: {e}", exc_info=True)
+        logger.error(f"Prediction failed for customer ID {input_data.ID}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}") from e
 
 

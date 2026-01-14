@@ -1,9 +1,0 @@
-dependencies:
-- name: postgres
-  repository: file://../infrastructure/postgres
-  version: 0.1.0
-- name: mlflow
-  repository: file://../infrastructure/mlflow
-  version: 0.1.0
-digest: sha256:96f4b9054c9847cb1cf34b7d40288408b4e86f47d2c32b5bc0ff9b899a6ab7a5
-generated: "2025-11-11T00:24:44.727977498+07:00"
