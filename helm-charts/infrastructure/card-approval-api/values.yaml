@@ -84,10 +84,11 @@ autoscaling:
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
 
-# Prometheus monitoring
+# Prometheus monitoring & Loki logging
 monitoring:
   enabled: true
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: "8000"
     prometheus.io/path: "/metrics"
+    logging_enabled: "true"  # Required for Grafana Alloy to collect logs to Loki

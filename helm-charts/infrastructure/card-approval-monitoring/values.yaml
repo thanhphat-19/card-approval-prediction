@@ -226,6 +226,10 @@ loki:
     commonConfig:
       replication_factor: 1
 
+    # Limits config - enable log volume for Grafana
+    limits_config:
+      volume_enabled: true
+
     # Storage config - use filesystem for GKE
     storage:
       type: filesystem
