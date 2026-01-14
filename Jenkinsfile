@@ -99,30 +99,6 @@ pipeline {
             }
         }
 
-        /* =====================
-           SONARQUBE ANALYSIS
-        ====================== */
-        stage('SonarQube Analysis') {
-            steps {
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                    tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
-                    docker run --rm -i \
-                      -w /workspace \
-                      sonarsource/sonar-scanner-cli:latest \
-                      bash -c "
-                        tar xf - &&
-                        sonar-scanner \
-                          -Dsonar.host.url=http://35.229.23.37:9000 \
-                          -Dsonar.token=${SONAR_TOKEN} \
-                          -Dsonar.projectKey=card-approval-prediction \
-                          -Dsonar.sources=app,cap_model/src \
-                          -Dsonar.exclusions=**/__pycache__/**,**/tests/**,**/*.pyc
-                      "
-                    '''
-                }
-            }
-        }
 
         /* =====================
            BUILD IMAGE
