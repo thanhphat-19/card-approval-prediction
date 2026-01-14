@@ -10,7 +10,7 @@ echo "================================================"
 echo ""
 
 # Configuration
-CLUSTER_NAME="mlops-cluster"
+CLUSTER_NAME="product-recsys-mlops-gke"
 REGION="us-east1"
 JENKINS_VM="jenkins-server"
 JENKINS_ZONE="us-east1-b"
@@ -62,20 +62,13 @@ done
 
 echo -e "${GREEN}✓${NC} All deployments scaled to 0"
 
-# Step 2: Scale cluster to 0 nodes
+# Step 2: Wait for Autopilot to scale down
 echo ""
-echo "Step 2: Removing all cluster nodes..."
-echo "---------------------------------------"
-echo "  This will take a few minutes..."
-echo ""
-
-gcloud container clusters resize ${CLUSTER_NAME} \
-    --num-nodes=0 \
-    --region=${REGION} \
-    --project=${PROJECT_ID} \
-    --quiet
-
-echo -e "${GREEN}✓${NC} All nodes removed"
+echo "Step 2: Autopilot auto-scaling..."
+echo "----------------------------------"
+echo "  GKE Autopilot will automatically scale down nodes"
+echo "  when all deployments are at 0 replicas."
+echo -e "${GREEN}✓${NC} Autopilot will handle node scaling"
 
 # Step 3: Stop Jenkins VM
 echo ""
@@ -98,17 +91,17 @@ echo "================================================"
 echo -e "${GREEN}✅ Weekend Shutdown Complete!${NC}"
 echo "================================================"
 echo ""
-echo "💰 Cost While Shutdown:"
-echo "  • GKE Control Plane: ~\$2.50/day"
-echo "  • Persistent Storage: ~\$0.33/day"
-echo "  • Jenkins VM (stopped): \$0.00/day"
-echo "  • Total: ~\$2.83/day (was \$7.67/day)"
-echo "  • Weekend Savings: ~\$34 saved"
+echo "Cost While Shutdown:"
+echo "  - GKE Control Plane: ~\$2.50/day"
+echo "  - Persistent Storage: ~\$0.33/day"
+echo "  - Jenkins VM (stopped): \$0.00/day"
+echo "  - Total: ~\$2.83/day (was \$7.67/day)"
+echo "  - Weekend Savings: ~\$34 saved"
 echo ""
-echo "📅 Current Status:"
-echo "  • Cluster nodes: 0 (no compute charges)"
-echo "  • Jenkins: Stopped"
-echo "  • Data: Preserved ✓"
+echo "Current Status:"
+echo "  - Autopilot: All deployments at 0 (nodes auto-scale down)"
+echo "  - Jenkins: Stopped"
+echo "  - Data: Preserved"
 echo ""
 echo "🌅 To resume Monday morning:"
 echo "  ./scripts/monday-startup.sh"
