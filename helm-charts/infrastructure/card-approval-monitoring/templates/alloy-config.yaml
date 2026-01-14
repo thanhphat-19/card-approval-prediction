@@ -1,0 +1,135 @@
+{{- if .Values.alloy }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "prometheus.labels" . | nindent 4 }}
+data:
+  config.alloy: |
+    // =============================================================================
+    // Alloy Configuration for Card Approval API Log Collection
+    // =============================================================================
+
+    // Discover all Kubernetes pods
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    // Relabel and filter pods
+    discovery.relabel "filtered_pods" {
+      targets = discovery.kubernetes.pods.targets
+
+      // Keep pods from card-approval, monitoring, and recsys-training namespaces
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        regex         = "(card-approval|monitoring|recsys-training)"
+        action        = "keep"
+      }
+
+      // Set namespace label
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+
+      // Set pod label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+
+      // Set container label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+
+      // Set app label from pod label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        target_label  = "app"
+      }
+
+      // Set app label from app.kubernetes.io/name label (fallback)
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+        target_label  = "app"
+        action        = "replace"
+      }
+
+      // Set service label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_component"]
+        target_label  = "component"
+      }
+
+      // Set job name as namespace/app
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_label_app"]
+        separator     = "/"
+        target_label  = "job"
+      }
+
+      // Set node label
+      rule {
+        source_labels = ["__meta_kubernetes_pod_node_name"]
+        target_label  = "node"
+      }
+    }
+
+    // Collect logs from Kubernetes pods using the Kubernetes API
+    loki.source.kubernetes "pods" {
+      targets    = discovery.relabel.filtered_pods.output
+      forward_to = [loki.process.card_approval.receiver]
+    }
+
+    // Process logs for card-approval namespace
+    loki.process "card_approval" {
+      // Try to parse as JSON (loguru outputs structured logs)
+      stage.json {
+        expressions = {
+          level     = "level",
+          message   = "message",
+          timestamp = "time",
+          logger    = "name",
+          function  = "function",
+        }
+      }
+
+      // Extract level from parsed JSON
+      stage.labels {
+        values = {
+          level = "",
+        }
+      }
+
+      // Normalize log levels
+      stage.label_drop {
+        values = ["filename", "stream"]
+      }
+
+      // Add static labels
+      stage.static_labels {
+        values = {
+          cluster = "card-approval-gke",
+        }
+      }
+
+      forward_to = [loki.write.default.receiver]
+    }
+
+    // Write logs to Loki
+    loki.write "default" {
+      endpoint {
+        url = "http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}.svc.cluster.local/loki/api/v1/push"
+
+        // Retry configuration
+        retry_on_http_429 = true
+      }
+      external_labels = {
+        cluster = "card-approval",
+      }
+    }
+{{- end }}

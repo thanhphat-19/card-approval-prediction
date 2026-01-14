@@ -88,9 +88,9 @@ api:
     modelName: "card_approval_model"
     modelStage: "Production"
 
-  # MLflow connection - points to existing recsys-training MLflow
+  # MLflow connection - points to existing card-approval-training MLflow
   mlflow:
-    trackingUri: "http://recsys-training-mlflow.recsys-training.svc.cluster.local:5000"
+    trackingUri: "http://card-approval-training-mlflow.card-approval-training.svc.cluster.local:5000"
 
   # PostgreSQL connection (matches postgres config above)
   postgres:

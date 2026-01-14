@@ -1,0 +1,93 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: card-approval-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "prometheus.labels" . | nindent 4 }}
+    prometheus: kube-prometheus
+spec:
+  groups:
+    - name: card-approval-api
+      rules:
+        # High Error Rate Alert
+        - alert: CardApprovalHighErrorRate
+          expr: |
+            sum(rate(fastapi_requests_total{namespace="card-approval", status=~"5.."}[5m]))
+            /
+            sum(rate(fastapi_requests_total{namespace="card-approval"}[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+            service: card-approval-api
+          annotations:
+            summary: "High error rate in Card Approval API"
+            description: "Error rate is {{ "{{" }} $value | humanizePercentage {{ "}}" }} (threshold: 5%)"
+
+        # Critical Error Rate Alert
+        - alert: CardApprovalCriticalErrorRate
+          expr: |
+            sum(rate(fastapi_requests_total{namespace="card-approval", status=~"5.."}[5m]))
+            /
+            sum(rate(fastapi_requests_total{namespace="card-approval"}[5m])) > 0.10
+          for: 2m
+          labels:
+            severity: critical
+            service: card-approval-api
+          annotations:
+            summary: "Critical error rate in Card Approval API"
+            description: "Error rate is {{ "{{" }} $value | humanizePercentage {{ "}}" }} (threshold: 10%)"
+
+        # High Latency Alert
+        - alert: CardApprovalHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(fastapi_request_duration_seconds_bucket{namespace="card-approval"}[5m])) by (le)
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+            service: card-approval-api
+          annotations:
+            summary: "High latency in Card Approval API"
+            description: "P95 latency is {{ "{{" }} $value | humanizeDuration {{ "}}" }} (threshold: 1s)"
+
+        # Prediction Latency Alert
+        - alert: CardApprovalPredictionSlowdown
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(prediction_duration_seconds_bucket{namespace="card-approval"}[5m])) by (le)
+            ) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            service: card-approval-api
+          annotations:
+            summary: "Slow prediction inference"
+            description: "P95 prediction latency is {{ "{{" }} $value | humanizeDuration {{ "}}" }} (threshold: 500ms)"
+
+        # Pod Down Alert
+        - alert: CardApprovalPodDown
+          expr: |
+            kube_deployment_status_replicas_available{namespace="card-approval", deployment=~".*api.*"} < 1
+          for: 2m
+          labels:
+            severity: critical
+            service: card-approval-api
+          annotations:
+            summary: "Card Approval API has no available pods"
+            description: "All Card Approval API pods are down"
+
+        # High Memory Usage
+        - alert: CardApprovalHighMemory
+          expr: |
+            sum(container_memory_working_set_bytes{namespace="card-approval", container=~".*api.*"})
+            /
+            sum(kube_pod_container_resource_limits{namespace="card-approval", container=~".*api.*", resource="memory"}) > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            service: card-approval-api
+          annotations:
+            summary: "High memory usage in Card Approval API"
+            description: "Memory usage is {{ "{{" }} $value | humanizePercentage {{ "}}" }}"

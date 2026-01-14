@@ -43,10 +43,10 @@ kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f 
 
 # Step 4: Check if MLflow is accessible (required dependency)
 echo "Step 4: Checking MLflow connectivity..."
-if kubectl get svc -n recsys-training recsys-training-mlflow &> /dev/null; then
-    echo "✓ MLflow service found in recsys-training namespace"
+if kubectl get svc -n card-approval-training card-approval-training-mlflow &> /dev/null; then
+    echo "✓ MLflow service found in card-approval-training namespace"
 else
-    echo "⚠ Warning: MLflow service not found. Make sure recsys-training is deployed."
+    echo "⚠ Warning: MLflow service not found. Make sure card-approval-training is deployed."
     read -p "Continue anyway? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then

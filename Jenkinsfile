@@ -10,11 +10,12 @@ pipeline {
     environment {
         // GCP
         PROJECT_ID    = 'product-recsys-mlops'
-        REGION        = 'us-east1'
-        GKE_CLUSTER   = 'product-recsys-mlops-gke'
+        ZONE          = 'us-east1-b'
+        GKE_CLUSTER   = 'card-approval-prediction-mlops-gke'
         GKE_NAMESPACE = 'card-approval'
 
         // Docker
+        REGION     = 'us-east1'
         REGISTRY   = "${REGION}-docker.pkg.dev"
         REPOSITORY = "${PROJECT_ID}/product-recsys-mlops-recsys"
         IMAGE_NAME = 'card-approval-api'
@@ -140,7 +141,7 @@ pipeline {
                         mkdir -p /deploy && cd /deploy && tar xf - &&
                         gcloud auth activate-service-account --key-file=/deploy/gcp-key.json &&
                         gcloud container clusters get-credentials ${GKE_CLUSTER} \
-                          --region ${REGION} \
+                          --zone ${ZONE} \
                           --project ${PROJECT_ID} &&
                         curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash &&
                         helm dependency build /deploy/helm-charts/card-approval &&
