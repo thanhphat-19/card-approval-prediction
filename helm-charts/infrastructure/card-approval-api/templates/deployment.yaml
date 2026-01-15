@@ -15,7 +15,7 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      {{- include "api.selectorLabels" . | nindent 6 }}
+      {{- include "api.labels" . | nindent 6 }}
   template:
     metadata:
       annotations:
