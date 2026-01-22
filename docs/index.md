@@ -35,39 +35,17 @@ graph TB
 
 ---
 
-## 📚 Documentation Structure
+## 📚 Documentation
 
-### 🚀 Getting Started
-| Document | Description |
-|----------|-------------|
-| [Quick Start](./getting-started/quick-start.md) | 5-minute setup guide |
-| [Installation](./getting-started/installation.md) | Prerequisites & dependencies |
-| [Local Development](./getting-started/local-development.md) | Docker-compose setup |
-
-### 📦 Modules
-| Module | Overview | Key Topics |
-|--------|----------|------------|
-| [API](./modules/api/overview.md) | FastAPI application | [Endpoints](./modules/api/endpoints.md) • [Configuration](./modules/api/configuration.md) |
-| [ML Pipeline](./modules/ml-pipeline/overview.md) | Training & inference | [Data Prep](./modules/ml-pipeline/data-preparation.md) • [Training](./modules/ml-pipeline/model-training.md) |
-| [Infrastructure](./modules/infrastructure/overview.md) | Terraform & GCP | [Setup](./modules/infrastructure/terraform-setup.md) • [Costs](./modules/infrastructure/cost-management.md) |
-| [Kubernetes](./modules/kubernetes/overview.md) | Helm deployments | [Charts](./modules/kubernetes/helm-charts.md) • [Deployment](./modules/kubernetes/deployment-guide.md) |
-| [CI/CD](./modules/cicd/overview.md) | Jenkins pipeline | [Pipeline](./modules/cicd/jenkins-pipeline.md) • [SonarQube](./modules/cicd/sonarqube-setup.md) |
-| [Monitoring](./modules/monitoring/overview.md) | Observability stack | [Prometheus](./modules/monitoring/prometheus-setup.md) • [Grafana](./modules/monitoring/grafana-dashboards.md) |
-
-### 🔧 Operations
-| Document | Description |
-|----------|-------------|
-| [Deployment Checklist](./operations/deployment-checklist.md) | Pre/post deployment steps |
-| [Runbook](./operations/runbook.md) | Operational procedures |
-| [Disaster Recovery](./operations/disaster-recovery.md) | Recovery procedures |
-
-### 📖 Reference
-| Document | Description |
-|----------|-------------|
-| [API Reference](./reference/api-reference.md) | Full API specification |
-| [Environment Variables](./reference/environment-variables.md) | All configuration options |
-| [Architecture Diagrams](./reference/architecture-diagrams.md) | System diagrams |
-| [Glossary](./reference/glossary.md) | Terms & definitions |
+| # | Document | Description |
+|---|----------|-------------|
+| 01 | [Terraform Setup](./01_Terraform.md) | GCP infrastructure setup |
+| 02 | [Terraform Architecture](./02_terraform_architecture.md) | Infrastructure design |
+| 03 | [Helm Deployment](./03_Helm_Deployment.md) | Kubernetes deployment |
+| 04 | [MLflow & Training](./04_MLflow_Training.md) | Model training pipeline |
+| 05 | [API Service](./05_API_Service.md) | FastAPI application |
+| 06 | [CI/CD Pipeline](./06_CICD_Pipeline.md) | Jenkins automation |
+| 07 | [Monitoring](./07_Monitoring.md) | Prometheus + Grafana |
 
 ---
 
