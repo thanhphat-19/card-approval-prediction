@@ -46,7 +46,7 @@ class PreprocessingService:
 
     def preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
         """Preprocess input for model prediction: encode → align → scale → PCA"""
-        # Drop ID column - it's not a feature
+        # Drop ID column
         if "ID" in df.columns:
             df = df.drop("ID", axis=1)
 
@@ -67,7 +67,7 @@ class PreprocessingService:
         return pd.DataFrame(df_pca, columns=pc_columns, index=df.index)
 
 
-# Global instance (will be initialized lazily)
+# Global instance
 _preprocessing_service = None
 
 

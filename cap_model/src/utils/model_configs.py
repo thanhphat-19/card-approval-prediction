@@ -22,7 +22,9 @@ MODEL_CLASSES = {
 }
 
 
-def get_model_configs(models: Optional[List[str]] = None, config_path: Optional[str] = None) -> Dict:
+def get_model_configs(
+    models: Optional[List[str]] = None, config_path: Optional[str] = None
+) -> Dict:
     """
     Get model configurations for training from config file
 
@@ -46,7 +48,7 @@ def get_model_configs(models: Optional[List[str]] = None, config_path: Optional[
     for model_name, model_class in MODEL_CLASSES.items():
         if model_name in hyperparameters:
             params = hyperparameters[model_name]
-            # Ensure params is a dict (in case YAML returns None for empty)
+            # Ensure params is a dict
             if params is None:
                 params = {}
 

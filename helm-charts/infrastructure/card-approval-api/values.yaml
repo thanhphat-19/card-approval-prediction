@@ -4,7 +4,7 @@ image:
   tag: "latest"
   pullPolicy: Always
 
-# Number of replicas (can be overridden by HPA)
+# Number of replicas
 replicaCount: 2
 
 service:
@@ -29,7 +29,7 @@ config:
   modelName: "card_approval_model"
   modelStage: "Production"
 
-# MLflow connection (points to existing card-approval-training MLflow)
+# MLflow connection
 mlflow:
   trackingUri: "http://card-approval-training-mlflow.card-approval-training.svc.cluster.local:5000"
 
@@ -59,7 +59,7 @@ healthCheck:
     timeoutSeconds: 3
     failureThreshold: 3
 
-# Workload Identity for GCS access (if needed)
+# Workload Identity for GCS access
 serviceAccount:
   create: true
   name: card-approval-api-sa
@@ -67,7 +67,7 @@ serviceAccount:
     # Link to GCP SA if needed for model access
     iam.gke.io/gcp-service-account: ""
 
-# Ingress configuration (optional)
+# Ingress configuration
 ingress:
   enabled: false
   className: "nginx"

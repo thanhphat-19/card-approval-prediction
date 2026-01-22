@@ -18,25 +18,25 @@ class Settings(BaseSettings):
     # PostgreSQL credentials
     POSTGRES_DB: str = "mlflow"
     POSTGRES_USER: str = "mlflow"
-    POSTGRES_PASSWORD: str = ""  # Set via environment variable
+    POSTGRES_PASSWORD: str = ""
 
     # MLflow
     MLFLOW_TRACKING_URI: str = "http://127.0.0.1:5000"
     MODEL_NAME: str = "card_approval_model"
     MODEL_STAGE: str = "Production"
 
-    # Google Cloud (for GCS artifact storage)
+    # Google Cloud
     GOOGLE_APPLICATION_CREDENTIALS: str = ""
 
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "logs/app.log"
-    LOG_FORMAT: str = "text"  # "text" for local dev, "json" for Kubernetes/Loki
+    LOG_FORMAT: str = "text"
 
     class Config:
         env_file = ".env"
         case_sensitive = True
-        extra = "ignore"  # Ignore extra fields in .env
+        extra = "ignore"
 
 
 @lru_cache()

@@ -10,7 +10,7 @@ output "region" {
 
 # GKE Outputs
 output "gke_cluster_name" {
-  description = "GKE Autopilot cluster name"
+  description = "GKE cluster name"
   value       = google_container_cluster.primary.name
 }
 

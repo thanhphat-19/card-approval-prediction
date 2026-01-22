@@ -92,7 +92,9 @@ class TestPredictValidation:
     def test_predict_invalid_json(self, client):
         """Test prediction with invalid JSON."""
         response = client.post(
-            "/api/v1/predict", content="not valid json", headers={"Content-Type": "application/json"}
+            "/api/v1/predict",
+            content="not valid json",
+            headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 422
 
@@ -109,7 +111,7 @@ class TestPredictPerformance:
         duration = time.time() - start
 
         assert response.status_code == 200
-        # Should respond within 5 seconds (generous for CI)
+        # Should respond within 5 seconds
         assert duration < 5.0
 
     def test_predict_multiple_requests(self, client, sample_prediction_input):
@@ -142,7 +144,12 @@ class TestPredictDifferentProfiles:
 
     def test_different_education_levels(self, client, sample_prediction_input):
         """Test predictions with different education levels."""
-        education_levels = ["Higher education", "Secondary / secondary special", "Incomplete higher", "Lower secondary"]
+        education_levels = [
+            "Higher education",
+            "Secondary / secondary special",
+            "Incomplete higher",
+            "Lower secondary",
+        ]
 
         for edu in education_levels:
             sample_prediction_input["NAME_EDUCATION_TYPE"] = edu

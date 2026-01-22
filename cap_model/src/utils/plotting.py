@@ -166,7 +166,7 @@ def plot_threshold_analysis(
     ax.legend(fontsize=11)
     ax.grid(alpha=0.3)
 
-    # Find optimal threshold (max F1)
+    # Find optimal threshold
     optimal_idx = np.argmax(f1_scores)
     optimal_threshold = thresholds[optimal_idx]
     ax.axvline(

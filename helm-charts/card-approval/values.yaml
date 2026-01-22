@@ -1,14 +1,12 @@
-# Umbrella chart for Card Approval Prediction API
-# This combines PostgreSQL, Redis, and FastAPI into a single deployment
+# Card Approval Prediction API
 
-# Global namespace for all components
+# Namespace
 namespace: card-approval
 
 # PostgreSQL configuration
 postgres:
   enabled: true
 
-  # Database configuration
   database: card_approval_db
   username: app_user
   password: phatngothanh19
@@ -24,7 +22,6 @@ postgres:
       memory: "512Mi"
       cpu: "500m"
 
-  # Persistent storage configuration
   persistence:
     enabled: true
     storageClass: "standard-rwo"
@@ -88,11 +85,11 @@ api:
     modelName: "card_approval_model"
     modelStage: "Production"
 
-  # MLflow connection - points to existing card-approval-training MLflow
+  # MLflow connection
   mlflow:
     trackingUri: "http://card-approval-training-mlflow.card-approval-training.svc.cluster.local:5000"
 
-  # PostgreSQL connection (matches postgres config above)
+  # PostgreSQL connection
   postgres:
     host: "card-approval-postgres"
     port: 5432
@@ -100,7 +97,7 @@ api:
     username: "app_user"
     password: "phatngothanh19"
 
-  # Redis connection (matches redis config above)
+  # Redis connection
   redis:
     host: "card-approval-redis"
     port: 6379
@@ -110,7 +107,6 @@ api:
     create: true
     name: card-approval-api-sa
     annotations:
-      # Link to same GCP SA as MLflow for model artifact access
       iam.gke.io/gcp-service-account: "mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com"
 
   # Autoscaling
@@ -121,7 +117,7 @@ api:
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 80
 
-  # Ingress (optional - for external access)
+  # Ingress
   ingress:
     enabled: false
     className: "nginx"
@@ -136,4 +132,4 @@ api:
       prometheus.io/scrape: "true"
       prometheus.io/port: "8000"
       prometheus.io/path: "/metrics"
-      logging_enabled: "true"  # Required for Grafana Alloy to collect logs to Loki
+      logging_enabled: "true"

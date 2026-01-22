@@ -37,7 +37,9 @@ class DataLoader:
         credit_data = pd.read_csv(credit_path)
 
         logger.info(f"Application Records: {app_data.shape[0]:,} rows, {app_data.shape[1]} columns")
-        logger.info(f"Credit Records: {credit_data.shape[0]:,} rows, {credit_data.shape[1]} columns")
+        logger.info(
+            f"Credit Records: {credit_data.shape[0]:,} rows, {credit_data.shape[1]} columns"
+        )
         logger.info(f"Unique Applicants: {app_data['ID'].nunique():,}")
 
         return app_data, credit_data
@@ -60,7 +62,9 @@ class DataLoader:
 
         # Create Good/Bad labels from STATUS
         credit_data = credit_data.copy()
-        credit_data["Good or Bad"] = credit_data["STATUS"].apply(lambda x: "Good" if x in ["0", "X", "C"] else "Bad")
+        credit_data["Good or Bad"] = credit_data["STATUS"].apply(
+            lambda x: "Good" if x in ["0", "X", "C"] else "Bad"
+        )
 
         # Group by ID and get dominant label
         credit_goods_bads = credit_data.groupby(["ID", "Good or Bad"]).size().to_frame("size")
@@ -70,15 +74,17 @@ class DataLoader:
         max_goods_bads = credit_goods_bads.loc[idx]
 
         # Convert to binary (1=Good, 0=Bad)
-        max_goods_bads["Label"] = max_goods_bads["Good or Bad"].apply(lambda x: 1 if x == "Good" else 0)
+        max_goods_bads["Label"] = max_goods_bads["Good or Bad"].apply(
+            lambda x: 1 if x == "Good" else 0
+        )
         max_goods_bads = max_goods_bads[["ID", "Label"]].reset_index(drop=True)
 
         logger.info(f"Created target labels for {len(max_goods_bads):,} customers")
         logger.info(
-            f"Good (1): {(max_goods_bads['Label'] == 1).sum():,} ({(max_goods_bads['Label'] == 1).sum() / len(max_goods_bads) * 100:.1f}%)"
+            f"Good (1): {(max_goods_bads['Label'] == 1).sum():,} ({(max_goods_bads['Label'] == 1).sum() / len(max_goods_bads) * 100:.1f}%)"  # noqa: E501
         )
         logger.info(
-            f"Bad (0): {(max_goods_bads['Label'] == 0).sum():,} ({(max_goods_bads['Label'] == 0).sum() / len(max_goods_bads) * 100:.1f}%)"
+            f"Bad (0): {(max_goods_bads['Label'] == 0).sum():,} ({(max_goods_bads['Label'] == 0).sum() / len(max_goods_bads) * 100:.1f}%)"  # noqa: E501
         )
 
         return max_goods_bads
@@ -114,12 +120,14 @@ class DataLoader:
         logger.info(f"Merged dataset: {len(merged_data):,} rows, {merged_data.shape[1]} columns")
         logger.info("Target Distribution After Merge:")
         logger.info(
-            f"  Good (1): {(merged_data['Label'] == 1).sum():,} ({(merged_data['Label'] == 1).sum() / len(merged_data) * 100:.2f}%)"
+            f"  Good (1): {(merged_data['Label'] == 1).sum():,} ({(merged_data['Label'] == 1).sum() / len(merged_data) * 100:.2f}%)"  # noqa: E501
         )
         logger.info(
-            f"  Bad (0): {(merged_data['Label'] == 0).sum():,} ({(merged_data['Label'] == 0).sum() / len(merged_data) * 100:.2f}%)"
+            f"  Bad (0): {(merged_data['Label'] == 0).sum():,} ({(merged_data['Label'] == 0).sum() / len(merged_data) * 100:.2f}%)"  # noqa: E501
         )
-        logger.info(f"  Imbalance Ratio: {(merged_data['Label'] == 1).sum() / (merged_data['Label'] == 0).sum():.2f}:1")
+        logger.info(
+            f"  Imbalance Ratio: {(merged_data['Label'] == 1).sum() / (merged_data['Label'] == 0).sum():.2f}:1"  # noqa: E501
+        )
 
         return merged_data
 
@@ -143,7 +151,7 @@ class DataLoader:
         X = merged_data.drop("Label", axis=1)
         y = merged_data["Label"]
 
-        # Remove ID column - it's just an identifier, not a predictive feature
+        # Remove ID column
         if "ID" in X.columns:
             X = X.drop("ID", axis=1)
             logger.info("Removed ID column from features")
