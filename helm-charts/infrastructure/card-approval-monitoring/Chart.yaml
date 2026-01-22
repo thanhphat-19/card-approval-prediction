@@ -5,7 +5,7 @@ type: application
 version: 0.1.0
 appVersion: "2.50.0"
 
-# Dependencies: kube-prometheus-stack + Loki + Alloy
+# Dependencies
 dependencies:
   # Prometheus + Grafana + Alertmanager
   - name: kube-prometheus-stack

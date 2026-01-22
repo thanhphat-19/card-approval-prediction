@@ -1,15 +1,15 @@
 # Prometheus + Grafana + Loki Monitoring Stack
 # Uses kube-prometheus-stack and loki-stack as foundation
-# Optimized for GKE Autopilot (reduced resources, disabled admission webhooks)
+# Optimized for GKE Standard
 
 # =============================================================================
-# kube-prometheus-stack configuration (GKE Autopilot Optimized)
+# kube-prometheus-stack configuration
 # =============================================================================
 kube-prometheus:
   # Prometheus Operator
   prometheusOperator:
     enabled: true
-    # Tolerations for GKE Autopilot defrag taints
+    # Tolerations for scheduling
     tolerations:
       - effect: NoSchedule
         operator: Exists
@@ -20,21 +20,8 @@ kube-prometheus:
       limits:
         cpu: 100m
         memory: 128Mi
-    # DISABLE admission webhooks - fixes 80% of Autopilot scheduling issues
     admissionWebhooks:
       enabled: false
-      # If you need webhooks, use minimal resources:
-      # patch:
-      #   tolerations:
-      #     - effect: NoSchedule
-      #       operator: Exists
-      #   resources:
-      #     requests:
-      #       cpu: 50m
-      #       memory: 32Mi
-      #     limits:
-      #       cpu: 100m
-      #       memory: 64Mi
 
   # Prometheus Server
   prometheus:
@@ -46,10 +33,10 @@ kube-prometheus:
       retention: 7d
       retentionSize: "5GB"
 
-      # GKE Autopilot max is 600s
+      # Graceful shutdown period
       terminationGracePeriodSeconds: 300
 
-      # Reduced resources for Autopilot
+      # Resource limits
       resources:
         requests:
           cpu: 100m
@@ -68,7 +55,7 @@ kube-prometheus:
               requests:
                 storage: 20Gi
 
-      # Service discovery - watch all namespaces
+      # Service discovery
       serviceMonitorSelectorNilUsesHelmValues: false
       podMonitorSelectorNilUsesHelmValues: false
       ruleSelectorNilUsesHelmValues: false
@@ -108,9 +95,9 @@ kube-prometheus:
       - effect: NoSchedule
         operator: Exists
     adminUser: admin
-    adminPassword: "card-approval-grafana-2025"  # Change in production!
+    adminPassword: "card-approval-grafana-2025"
 
-    # Reduced resources for Autopilot
+    # Resource limits
     resources:
       requests:
         cpu: 50m
@@ -120,7 +107,7 @@ kube-prometheus:
         memory: 128Mi
 
     persistence:
-      enabled: false  # Disable to reduce resource pressure
+      enabled: false
 
     service:
       type: ClusterIP
@@ -132,7 +119,7 @@ kube-prometheus:
     defaultDashboardsEnabled: true
     defaultDashboardsTimezone: "Asia/Ho_Chi_Minh"
 
-    # Sidecar containers - reduced resources
+    # Sidecar containers
     sidecar:
       dashboards:
         enabled: true
@@ -166,7 +153,7 @@ kube-prometheus:
           timeout: 60
           maxLines: 1000
 
-  # Alert Manager - DISABLED to reduce pod count on Autopilot
+  # Alert Manager
   alertmanager:
     enabled: false
 
@@ -181,7 +168,7 @@ kube-prometheus:
         cpu: 250m
         memory: 50Mi
 
-  # Kube State Metrics - reduced for Autopilot
+  # Kube State Metrics
   kube-state-metrics:
     tolerations:
       - effect: NoSchedule
@@ -211,11 +198,11 @@ kube-prometheus:
     enabled: false
 
 # =============================================================================
-# Loki Configuration (Log Storage)
+# Loki Configuration
 # =============================================================================
-# Using standalone Loki (simpler than loki-stack)
+# Using standalone Loki
 loki:
-  # Deploy in single binary mode (good for small/medium deployments)
+  # Deploy in single binary mode
   deploymentMode: SingleBinary
 
   loki:
@@ -226,11 +213,11 @@ loki:
     commonConfig:
       replication_factor: 1
 
-    # Limits config - enable log volume for Grafana
+    # Limits config
     limits_config:
       volume_enabled: true
 
-    # Storage config - use filesystem for GKE
+    # Storage config
     storage:
       type: filesystem
 
@@ -245,7 +232,7 @@ loki:
             prefix: loki_index_
             period: 24h
 
-  # Single binary mode - reduced for Autopilot
+  # Single binary mode
   singleBinary:
     replicas: 1
     tolerations:
@@ -263,7 +250,7 @@ loki:
       storageClass: standard-rwo
       size: 5Gi
 
-  # Disable other components (using single binary)
+  # Disable other components
   read:
     replicas: 0
   write:
@@ -290,7 +277,7 @@ loki:
   test:
     enabled: false
 
-  # Disable monitoring (we use kube-prometheus-stack)
+  # Disable self-monitoring
   monitoring:
     selfMonitoring:
       enabled: false
@@ -300,9 +287,9 @@ loki:
       enabled: false
 
 # =============================================================================
-# Alloy Configuration (Log Collection - replaces Promtail)
+# Alloy Configuration
 # =============================================================================
-# Alloy works on GKE Autopilot (no hostPath required)
+# Alloy log collector
 alloy:
   alloy:
     # Configure Alloy pipeline

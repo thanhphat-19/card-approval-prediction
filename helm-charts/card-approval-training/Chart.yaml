@@ -8,7 +8,7 @@ appVersion: "1.0"
 maintainers:
   - name: prod-recsys-team
 
-# Dependencies - automatically installs postgres and mlflow charts
+# Dependencies
 dependencies:
   - name: postgres
     version: "0.1.0"

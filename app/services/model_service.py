@@ -53,7 +53,7 @@ class ModelService:
             # Sort by version number (descending) and get the latest
             latest_version = sorted(stage_versions, key=lambda v: int(v.version), reverse=True)[0]
             self.version = latest_version.version
-            self.run_id = latest_version.run_id  # Capture run_id for preprocessing artifacts
+            self.run_id = latest_version.run_id
 
             model_uri = f"models:/{self.settings.MODEL_NAME}/{self.version}"
             logger.info(f"Loading model from: {model_uri} (stage: {self.settings.MODEL_STAGE})")
@@ -94,7 +94,7 @@ class ModelService:
         self._load_model()
 
 
-# Global instance (will be initialized on app startup)
+# Global instance
 _model_service = None
 
 

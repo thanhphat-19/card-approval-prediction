@@ -58,7 +58,7 @@ class TestHealthEndpoint:
         response = client.get("/health")
         data = response.json()
 
-        # These fields should exist (even if false due to mocking)
+        # These fields should exist
         assert "mlflow_connected" in data
         assert "database_connected" in data
 

@@ -21,7 +21,11 @@ from src.utils.metrics import get_classification_report  # noqa: E402
 from src.utils.mlflow_artifacts import MLflowArtifactManager  # noqa: E402
 
 # Import plotting functions
-from src.utils.plotting import plot_confusion_matrix, plot_precision_recall_curve, plot_roc_curve  # noqa: E402
+from src.utils.plotting import (  # noqa: E402
+    plot_confusion_matrix,
+    plot_precision_recall_curve,
+    plot_roc_curve,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -54,7 +58,7 @@ def main():
         "--auto-register",
         action="store_true",
         default=True,
-        help="Automatically register best model to MLflow Production stage (default: True, use --no-auto-register to disable)",
+        help="Automatically register best model to MLflow Production stage (default: True, use --no-auto-register to disable)",  # noqa: E501
     )
     parser.add_argument(
         "--no-auto-register",
@@ -85,10 +89,14 @@ def main():
 
         logger.info(f"✓ X_train: {X_train.shape}")
         logger.info(f"✓ X_test: {X_test.shape}")
-        logger.info(f"✓ y_train: {y_train.shape} - Good: {(y_train == 1).sum():,}, Bad: {(y_train == 0).sum():,}")
-        logger.info(f"✓ y_test: {y_test.shape} - Good: {(y_test == 1).sum():,}, Bad: {(y_test == 0).sum():,}")
+        logger.info(
+            f"✓ y_train: {y_train.shape} - Good: {(y_train == 1).sum():,}, Bad: {(y_train == 0).sum():,}"  # noqa: E501
+        )
+        logger.info(
+            f"✓ y_test: {y_test.shape} - Good: {(y_test == 1).sum():,}, Bad: {(y_test == 0).sum():,}"  # noqa: E501
+        )
 
-        # 2. Load Preprocessing Artifacts (if available)
+        # 2. Load Preprocessing Artifacts
         logger.info("\n2. Loading preprocessing artifacts...")
         scaler = None
         pca = None
@@ -116,17 +124,19 @@ def main():
                 # Validate that these are NOT PCA features
                 if feature_names and all(name.startswith("PC") for name in feature_names[:5]):
                     logger.error(
-                        "❌ feature_names.json contains PCA features (PC1, PC2, etc.) instead of one-hot encoded features!"
+                        "❌ feature_names.json contains PCA features (PC1, PC2, etc.) instead of one-hot encoded features!"  # noqa: E501
                     )
                     logger.error(
-                        "This will cause preprocessing to fail. Please re-run data preparation with save_preprocessors=True"
+                        "This will cause preprocessing to fail. Please re-run data preparation with save_preprocessors=True"  # noqa: E501
                     )
                     raise ValueError(
-                        "Invalid feature_names.json - contains PCA features instead of one-hot encoded features"
+                        "Invalid feature_names.json - contains PCA features instead of one-hot encoded features"  # noqa: E501
                     )
             else:
                 logger.error(f"❌ Feature names not found at {features_path}")
-                logger.error("Cannot proceed without feature names for proper feature alignment during inference")
+                logger.error(
+                    "Cannot proceed without feature names for proper feature alignment during inference"  # noqa: E501
+                )
                 raise FileNotFoundError(f"Required file not found: {features_path}")
 
         except Exception as e:
@@ -160,7 +170,9 @@ def main():
         output_path.mkdir(parents=True, exist_ok=True)
 
         # Save best model
-        best_model_path, metadata_path = trainer.save_best_model(args.output_dir, metric=args.metric)
+        best_model_path, metadata_path = trainer.save_best_model(
+            args.output_dir, metric=args.metric
+        )
         logger.info(f"✓ Best model saved to: {best_model_path}")
         logger.info(f"✓ Model metadata saved to: {metadata_path}")
 
@@ -170,7 +182,9 @@ def main():
             import mlflow
 
             with mlflow.start_run(run_id=trainer.best_model_run_id):
-                MLflowArtifactManager.log_preprocessing_artifacts(scaler=scaler, pca=pca, feature_names=feature_names)
+                MLflowArtifactManager.log_preprocessing_artifacts(
+                    scaler=scaler, pca=pca, feature_names=feature_names
+                )
             logger.info("✓ Preprocessing artifacts logged to MLflow")
         else:
             logger.warning("Could not log preprocessing artifacts - no run_id available")
@@ -191,7 +205,9 @@ def main():
 
         # Generate predictions
         y_pred = best_model.predict(X_test)
-        y_pred_proba = best_model.predict_proba(X_test)[:, 1] if hasattr(best_model, "predict_proba") else None
+        y_pred_proba = (
+            best_model.predict_proba(X_test)[:, 1] if hasattr(best_model, "predict_proba") else None
+        )
 
         # Create evaluation directory
         eval_dir = output_path / "evaluation"
@@ -210,7 +226,9 @@ def main():
                 y_pred_proba,
                 save_path=str(eval_dir / "precision_recall_curve.png"),
             )
-            logger.info(f"✓ Precision-Recall curve saved to: {eval_dir / 'precision_recall_curve.png'}")
+            logger.info(
+                f"✓ Precision-Recall curve saved to: {eval_dir / 'precision_recall_curve.png'}"
+            )
 
         # Save classification report
         report = get_classification_report(y_test, y_pred)
@@ -247,18 +265,22 @@ def main():
                 best_run_id = trainer.best_model_run_id
 
                 # Register model
-                registration_info = registry.register_model(run_id=best_run_id, model_name=args.model_name)
+                registration_info = registry.register_model(
+                    run_id=best_run_id, model_name=args.model_name
+                )
 
                 model_version = registration_info["version"]
 
                 # Add description to the registered version
-                description = f"Auto-registered: {trainer.best_model_name} | {args.metric}={trainer.best_score}"
+                description = f"Auto-registered: {trainer.best_model_name} | {args.metric}={trainer.best_score}"  # noqa: E501
                 registry.add_version_description(
                     model_name=args.model_name, version=model_version, description=description
                 )
 
                 # Transition to Production
-                registry.transition_model_stage(model_name=args.model_name, version=model_version, stage="Production")
+                registry.transition_model_stage(
+                    model_name=args.model_name, version=model_version, stage="Production"
+                )
 
                 logger.info(f"✅ Model registered: {args.model_name} v{model_version}")
                 logger.info(f"✅ Transitioned to Production stage")
@@ -268,7 +290,7 @@ def main():
                 logger.warning(f"⚠️  Auto-registration failed: {e}")
                 logger.info("You can manually register using:")
                 logger.info(
-                    f"  python scripts/register_model.py --run-id {trainer.best_model_run_id} --model-name {args.model_name} --stage Production"
+                    f"  python scripts/register_model.py --run-id {trainer.best_model_run_id} --model-name {args.model_name} --stage Production"  # noqa: E501
                 )
 
         return 0

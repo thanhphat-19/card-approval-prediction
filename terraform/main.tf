@@ -21,9 +21,9 @@ provider "google" {
 # ============================================
 resource "google_container_cluster" "primary" {
   name     = "card-approval-prediction-mlops-gke"
-  location = "us-east1-b"  # Single zone to reduce quota usage
+  location = "us-east1-b"
 
-  # Standard mode (no enable_autopilot = removes default node pool pattern)
+  # Standard mode
   remove_default_node_pool = true
   initial_node_count       = 1
 
@@ -32,7 +32,7 @@ resource "google_container_cluster" "primary" {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
 
-  # Deletion protection - disable for dev
+  # Deletion protection
   deletion_protection = false
 }
 
@@ -41,10 +41,10 @@ resource "google_container_cluster" "primary" {
 # ============================================
 resource "google_container_node_pool" "primary_nodes" {
   name       = "primary-node-pool"
-  location   = "us-east1-b"  # Single zone
+  location   = "us-east1-b"
   cluster    = google_container_cluster.primary.name
 
-  # Start with 1 node, scale up to 2
+  # Autoscaling configuration
   initial_node_count = 1
 
   autoscaling {
@@ -53,7 +53,7 @@ resource "google_container_node_pool" "primary_nodes" {
   }
 
   node_config {
-    # Use e2-standard-4 (4 vCPU, 16GB RAM) - good balance
+    # Machine type
     machine_type = "e2-standard-4"
     disk_size_gb = 30
     disk_type    = "pd-standard"
@@ -88,14 +88,14 @@ resource "google_container_node_pool" "primary_nodes" {
 resource "google_storage_bucket" "data" {
   name          = "${var.project_id}-recsys-data"
   location      = var.region
-  force_destroy = true  # Allow deletion for dev
+  force_destroy = true
 
   uniform_bucket_level_access = true
 
-  # Lifecycle rule to reduce costs
+  # Lifecycle rule
   lifecycle_rule {
     condition {
-      age = 90  # Delete files older than 90 days
+      age = 90
     }
     action {
       type = "Delete"

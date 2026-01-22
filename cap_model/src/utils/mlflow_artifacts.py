@@ -16,7 +16,10 @@ class MLflowArtifactManager:
 
     @staticmethod
     def log_preprocessing_artifacts(
-        scaler=None, pca=None, feature_names: Optional[list] = None, artifact_path: str = "preprocessors"
+        scaler=None,
+        pca=None,
+        feature_names: Optional[list] = None,
+        artifact_path: str = "preprocessors",
     ):
         """
         Log preprocessing artifacts to MLflow
@@ -31,19 +34,17 @@ class MLflowArtifactManager:
             artifact_dir = Path("preprocessors")
             artifact_dir.mkdir(exist_ok=True)
 
-            # Save scaler (extract inner sklearn object if it's a wrapper)
+            # Save scaler
             if scaler is not None:
                 scaler_path = artifact_dir / "scaler.pkl"
-                # If it's a wrapper class with .scaler attribute, save the inner sklearn object
                 scaler_to_save = scaler.scaler if hasattr(scaler, "scaler") else scaler
                 joblib.dump(scaler_to_save, scaler_path)
                 mlflow.log_artifact(str(scaler_path), artifact_path)
                 logger.info(f"✓ Logged scaler to MLflow")
 
-            # Save PCA (extract inner sklearn object if it's a wrapper)
+            # Save PCA
             if pca is not None:
                 pca_path = artifact_dir / "pca.pkl"
-                # If it's a wrapper class with .pca attribute, save the inner sklearn object
                 pca_to_save = pca.pca if hasattr(pca, "pca") else pca
                 joblib.dump(pca_to_save, pca_path)
                 mlflow.log_artifact(str(pca_path), artifact_path)
@@ -103,7 +104,7 @@ class MLflowArtifactManager:
                     data = json.load(f)
                     artifacts["feature_names"] = data.get("feature_names", [])
                 logger.info(
-                    f"✓ Loaded feature names from MLflow run {run_id} ({len(artifacts['feature_names'])} features)"
+                    f"✓ Loaded feature names from MLflow run {run_id} ({len(artifacts['feature_names'])} features)"  # noqa:
                 )
             else:
                 logger.warning(f"Feature names not found in run {run_id}")

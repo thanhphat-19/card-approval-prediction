@@ -42,7 +42,7 @@ def setup_logging():
     # Remove default handler
     logger.remove()
 
-    # Check if running in Kubernetes (JSON output for Loki)
+    # Check if running in Kubernetes
     is_kubernetes = settings.LOG_FORMAT == "json"
 
     if is_kubernetes:
@@ -50,10 +50,10 @@ def setup_logging():
         logger.add(
             json_sink,
             level=settings.LOG_LEVEL,
-            format="{message}",  # Format handled by json_sink
+            format="{message}",
         )
     else:
-        # Console handler (colored) for local development
+        # Console handler
         logger.add(
             sys.stdout,
             format=(
@@ -66,7 +66,7 @@ def setup_logging():
             colorize=True,
         )
 
-    # File handler (for production logs)
+    # File handler
     logger.add(
         settings.LOG_FILE,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function} - {message}",

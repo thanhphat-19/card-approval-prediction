@@ -1,14 +1,12 @@
-# Umbrella chart for MLflow training infrastructure
-# This combines PostgreSQL and MLflow into a single deployment
+# MLflow Training Infrastructure
 
-# Global namespace for all components
+# Namespace
 namespace: card-approval-training
 
 # PostgreSQL configuration
 postgres:
   enabled: true
 
-  # Override postgres chart values
   database: mlflow
   username: mlflow
   password: thanhphat192001
@@ -24,12 +22,11 @@ postgres:
       memory: "512Mi"
       cpu: "500m"
 
-  # CRITICAL: Persistent storage configuration
+  # Persistent storage
   persistence:
     enabled: true
-    storageClass: "standard-rwo"  # GKE default (HDD)
+    storageClass: "standard-rwo"
     size: 10Gi
-    # Retain keeps the disk even after 'helm uninstall'
     reclaimPolicy: Retain
 
 # MLflow configuration
@@ -47,9 +44,9 @@ mlflow:
       memory: "1Gi"
       cpu: "1000m"
 
-  # PostgreSQL connection (matches postgres config above)
+  # PostgreSQL connection
   postgres:
-    host: "card-approval-training-postgres"  # Will resolve to: {release-name}-postgres
+    host: "card-approval-training-postgres"
     port: 5432
     database: "mlflow"
     username: "mlflow"
@@ -65,10 +62,9 @@ mlflow:
     create: true
     name: mlflow-sa
     annotations:
-      # TODO: Setup after deployment (see DEPLOYMENT_GUIDE.md)
       iam.gke.io/gcp-service-account: ""
 
-  # Ingress (optional - for team access)
+  # Ingress
   ingress:
     enabled: false
     className: "nginx"
