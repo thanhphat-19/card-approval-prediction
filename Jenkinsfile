@@ -54,25 +54,22 @@ pipeline {
         }
 
         /* =====================
-           SKIP MERGED BRANCHES
+           CHECK BRANCH TYPE
         ====================== */
         stage('Check Branch') {
             steps {
                 script {
-                    // Only build main branch and active PR branches
-                    def validBranches = ['main', 'master', 'develop']
-                    def isPRBranch = env.BRANCH_NAME?.startsWith('PR-') ||
-                                     env.BRANCH_NAME?.startsWith('feature/') ||
-                                     env.BRANCH_NAME?.startsWith('fix/') ||
-                                     env.BRANCH_NAME?.startsWith('refactor/')
-
-                    if (!validBranches.contains(env.BRANCH_NAME) && !isPRBranch) {
-                        echo "⏭️ Skipping build for branch: ${env.BRANCH_NAME}"
-                        currentBuild.result = 'NOT_BUILT'
-                        error("Branch ${env.BRANCH_NAME} is not configured for CI. Skipping.")
-                    }
-
                     echo "✅ Building branch: ${env.BRANCH_NAME}"
+
+                    // Determine if this is main branch or a PR branch
+                    def isMainBranch = env.BRANCH_NAME in ['main', 'master', 'develop']
+                    env.IS_MAIN_BRANCH = isMainBranch ? 'true' : 'false'
+
+                    if (isMainBranch) {
+                        echo "📦 Main branch detected - will build, push, and deploy"
+                    } else {
+                        echo "🔍 Feature branch detected - will run tests and SonarQube analysis"
+                    }
                 }
             }
         }
@@ -105,9 +102,49 @@ pipeline {
             }
         }
 
+        /* =====================
+           SONARQUBE ANALYSIS (PR branches only)
+        ====================== */
+        stage('SonarQube Analysis') {
+            when {
+                not { branch 'main' }
+            }
+            steps {
+                script {
+                    withSonarQubeEnv('SonarQube') {
+                        sh '''
+                        # Run SonarQube scanner in Docker
+                        docker run --rm \
+                          -e SONAR_HOST_URL="${SONAR_HOST_URL}" \
+                          -e SONAR_TOKEN="${SONAR_AUTH_TOKEN}" \
+                          -v "$(pwd):/usr/src" \
+                          sonarsource/sonar-scanner-cli \
+                          -Dsonar.projectKey=card-approval-prediction \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url="${SONAR_HOST_URL}" \
+                          -Dsonar.token="${SONAR_AUTH_TOKEN}"
+                        '''
+                    }
+                }
+            }
+        }
 
         /* =====================
-           BUILD IMAGE
+           QUALITY GATE (PR branches only)
+        ====================== */
+        stage('Quality Gate') {
+            when {
+                not { branch 'main' }
+            }
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        /* =====================
+           BUILD IMAGE (main branch only)
         ====================== */
         stage('Build Docker Image') {
             when { branch 'main' }
@@ -202,7 +239,13 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            script {
+                try {
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "Workspace cleanup skipped: ${e.message}"
+                }
+            }
         }
         success {
             echo '✅ Pipeline completed successfully'
