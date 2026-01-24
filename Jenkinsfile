@@ -16,21 +16,19 @@ pipeline {
 
     environment {
         // =============================================================
-        // GCP Configuration - Set these in Jenkins credentials or here
+        // GCP Configuration (from config.env)
         // =============================================================
-        // To override: Manage Jenkins > Credentials > Add credentials
-        // Or set as Jenkins environment variables
-        PROJECT_ID    = credentials('gcp-project-id')    // Create a 'Secret text' credential
-        ZONE          = "${env.GCP_ZONE ?: 'us-east1-b'}"
-        REGION        = "${env.GCP_REGION ?: 'us-east1'}"
+        PROJECT_ID    = 'product-recsys-mlops'
+        ZONE          = 'us-east1-b'
+        REGION        = 'us-east1'
 
         // GKE Configuration
-        GKE_CLUSTER   = "${env.GKE_CLUSTER_NAME ?: 'card-approval-prediction-mlops-gke'}"
+        GKE_CLUSTER   = 'card-approval-prediction-mlops-gke'
         GKE_NAMESPACE = 'card-approval'
 
-        // Docker Registry
-        REGISTRY      = "${REGION}-docker.pkg.dev"
-        REPOSITORY    = "${PROJECT_ID}/${env.DOCKER_REPO_NAME ?: 'card-approval-repo'}"
+        // Docker Registry (from config.env: DOCKER_REPOSITORY)
+        REGISTRY      = 'us-east1-docker.pkg.dev'
+        REPOSITORY    = 'product-recsys-mlops/product-recsys-mlops-recsys'
         IMAGE_NAME    = 'card-approval-api'
     }
 
