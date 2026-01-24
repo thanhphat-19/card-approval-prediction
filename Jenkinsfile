@@ -97,7 +97,7 @@ pipeline {
                     echo '=== Black ===' &&
                     black --check app cap_model || true &&
                     echo '=== Isort ===' &&
-                    isort --check-only app cap_model || true
+                    isort --check-only --skip-gitignore app cap_model || true
                   "
                 '''
             }
@@ -117,6 +117,7 @@ pipeline {
                         # Run SonarQube scanner in Docker
                         # Uses sonar-project.properties for configuration
                         docker run --rm \
+                          --user $(id -u):$(id -g) \
                           -e SONAR_HOST_URL="${SONAR_HOST_URL}" \
                           -e SONAR_TOKEN="${SONAR_AUTH_TOKEN}" \
                           -v "$(pwd):/usr/src" \
