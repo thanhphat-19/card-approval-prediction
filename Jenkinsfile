@@ -96,7 +96,7 @@ pipeline {
                     echo '=== Black ===' &&
                     black --check app cap_model || true &&
                     echo '=== Isort ===' &&
-                    isort --check-only --skip-gitignore app cap_model || true
+                    isort --check-only app cap_model || true
                   "
                 '''
             }
@@ -114,13 +114,13 @@ pipeline {
                     withSonarQubeEnv('SonarQube') {
                         sh '''
                         # Run SonarQube scanner in Docker
+                        # Uses sonar-project.properties for configuration
                         docker run --rm \
                           -e SONAR_HOST_URL="${SONAR_HOST_URL}" \
                           -e SONAR_TOKEN="${SONAR_AUTH_TOKEN}" \
                           -v "$(pwd):/usr/src" \
+                          -w /usr/src \
                           sonarsource/sonar-scanner-cli \
-                          -Dsonar.projectKey=card-approval-prediction \
-                          -Dsonar.sources=. \
                           -Dsonar.host.url="${SONAR_HOST_URL}" \
                           -Dsonar.token="${SONAR_AUTH_TOKEN}"
                         '''
