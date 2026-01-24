@@ -1,13 +1,13 @@
 # Credit Card Approval Prediction - MLOps Project
 
-End-to-end MLOps pipeline for a production-ready credit card approval prediction system.
+End-to-end MLOps pipeline for a **Credit Card Approval** prediction system.
 
 
 ### 🏗️ Architecture
 
 This project implements:
 - **Infrastructure**: GCP (GKE, GCS, Artifact Registry) with Terraform
-- **CI/CD**: Jenkins + SonarQube (automated PR checks and deployments)
+- **CI/CD**: Jenkins + SonarQube
 - **ML Tracking**: MLflow for experiment tracking and model registry
 - **API**: FastAPI with PostgreSQL and Redis
 - **Deployment**: Kubernetes with Helm charts
@@ -36,30 +36,37 @@ This project implements:
 
 ### Prerequisites
 
+- GCP Account with billing enabled
+- `gcloud`, `kubectl`, `helm`, `terraform` installed
+- Python 3.10+
+
+### Setup
+
 ```bash
-# Install tools
+# 1. Clone the repository
+git clone https://github.com/yourusername/card-approval-prediction.git
+cd card-approval-prediction
+
+# 2. Configure your environment
+cp config.example.env config.env
+# Edit config.env with your GCP project ID and passwords
+
+# 3. Configure Terraform
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+# Edit terraform.tfvars with your project_id
+
+# 4. Deploy infrastructure
+cd terraform && terraform init && terraform apply
+
+# 5. Deploy applications (see docs/00_Setup_Guide.md for full instructions)
+```
+
+### Local Development
+
+```bash
 pip install -r requirements.txt
-
-
-### Local Development Setup
-
-
-1. **Install pre-commit hooks**:
-   ```bash
-   pip install pre-commit
-   pre-commit install
-   ```
-
-
-2. **Start local services**:
-   ```shell
-   ./scripts/run-dev
-   ```
-
-3. **Access services**:
-   - API: http://localhost:8000/docs
-   - MLflow: http://localhost:5000
-   - PostgreSQL: localhost:5432
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
 ### View Documentation
 
@@ -67,9 +74,7 @@ pip install -r requirements.txt
 mkdocs serve
 ```
 
-Access at: http://127.0.0.1:8000/
-
-
+> 📖 **Full setup instructions**: See [docs/00_Setup_Guide.md](docs/00_Setup_Guide.md)
 
 ---
 
@@ -77,29 +82,26 @@ Access at: http://127.0.0.1:8000/
 
 ```
 card-approval-prediction/
-├── docs/                           # 📚 Complete implementation guides
-│   ├── 00_README.md               # Documentation overview
-│   ├── 01_Terraform.md            # Infrastructure setup
-│   ├── 03_Helm_Deployment.md      # Kubernetes deployment
-│   └── 05_MLflow_Model_Development.md # ML development guide
-├── src/
-│   ├── api/                       # FastAPI application
-│   ├── db/                        # Database models & migrations
-│   ├── ml/                        # ML models & training
-│   └── core/                      # Config & utilities
-├── terraform/                     # Infrastructure as Code
-│   ├── main.tf                    # GCP resources (GKE, GCS, Artifact Registry)
-│   └── modules/                   # Terraform modules
-├── helm-charts/                   # Kubernetes deployments
-│   ├── recsys-training/          # MLflow + PostgreSQL
-│   ├── infrastructure/           # Shared infrastructure charts
-│   └── monitoring/               # Prometheus + Grafana
-├── tests/                         # pytest tests
-├── notebooks/                     # Jupyter notebooks for EDA
-├── Jenkinsfile                    # CI/CD pipeline
-├── docker-compose.yml             # Local development
-├── Dockerfile                     # Container image
-└── requirements.txt               # Python dependencies
+├── app/                        # FastAPI application
+├── cap_model/                  # ML training pipeline
+├── helm-charts/                # Kubernetes deployments
+│   ├── card-approval/          # API stack (API + Postgres + Redis)
+│   ├── card-approval-training/ # MLflow + Postgres
+│   └── infrastructure/         # Monitoring, Postgres, MLflow, nginx-ingress
+├── terraform/                  # GCP infrastructure (GKE, GCS, Artifact Registry)
+├── scripts/                    # Operational scripts (scale up/down, etc.)
+├── ansible/                    # Jenkins/infra configuration
+├── tests/                      # Test suites
+├── docs/                       # Project documentation
+│   ├── 00_Setup_Guide.md       # ⚙️ Start here!
+│   ├── 01_Terraform.md
+│   ├── ...
+│   └── index.md
+├── config.example.env          # Configuration template (copy to config.env)
+├── Jenkinsfile                 # CI/CD pipeline
+├── docker-compose.yml          # Optional local services
+├── Dockerfile                  # API image
+└── requirements.txt            # Python dependencies
 ```
 
 ---
@@ -119,16 +121,9 @@ This project demonstrates:
 
 
 
-
-## 🎓 Learning Outcomes
-
-By completing this project, you will learn:
-- Building production ML systems
-- Infrastructure as Code with Terraform
-- CI/CD pipelines with Jenkins
-- Kubernetes & Helm for deployment
-- MLflow for experiment tracking
-- Monitoring with Prometheus & Grafana
-- Best practices for MLOps
-
----
+## Improvements
+- [] Kserve
+- [] Knative Eventing
+- [] Data Pipeline
+- [] Unit Test via CICD
+# Test Jenkins integration
