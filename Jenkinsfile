@@ -103,7 +103,7 @@ pipeline {
         }
 
         /* =====================
-           SONARQUBE ANALYSIS (PR branches only)
+           SONARQUBE ANALYSIS & QUALITY GATE (PR branches only)
         ====================== */
         stage('SonarQube Analysis') {
             when {
@@ -123,6 +123,9 @@ pipeline {
                           sonarsource/sonar-scanner-cli \
                           -Dsonar.host.url="${SONAR_HOST_URL}" \
                           -Dsonar.token="${SONAR_AUTH_TOKEN}"
+
+                        # Copy report-task.txt to workspace root for Jenkins plugin
+                        cp .scannerwork/report-task.txt . || true
                         '''
                     }
                 }
@@ -137,8 +140,12 @@ pipeline {
                 not { branch 'main' }
             }
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                script {
+                    withSonarQubeEnv('SonarQube') {
+                        timeout(time: 5, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
                 }
             }
         }
