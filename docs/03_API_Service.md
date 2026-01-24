@@ -24,22 +24,7 @@ app/
 
 ---
 
-# **Step 1: Install Dependencies**
-
-```bash
-pip install -r requirements.txt
-```
-
-**Key dependencies:**
-- `fastapi` - Web framework
-- `uvicorn` - ASGI server
-- `mlflow` - Model loading
-- `pandas` - Data processing
-- `prometheus-client` - Metrics
-
----
-
-# **Step 2: Configure Environment**
+## Step 1: Configure Environment
 
 Create `.env` file:
 
@@ -66,7 +51,7 @@ APP_VERSION=1.0.0
 
 ---
 
-# **Step 3: Run API Locally**
+## Step 2: Run API Locally
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -91,7 +76,16 @@ open http://localhost:8000/docs
 
 ---
 
-# **Step 4: Test Health Endpoint**
+
+## Step 3: Run API in Kubernetes
+
+```bash
+kubectl port-forward svc/card-approval-api 8000:80 -n card-approval
+```
+
+---
+
+## Step 4: Test Health Endpoint
 
 ```bash
 curl http://localhost:8000/health
@@ -110,7 +104,7 @@ curl http://localhost:8000/health
 
 ---
 
-# **Step 5: Make a Prediction**
+## Step 5: Make a Prediction
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/predict \
@@ -152,7 +146,7 @@ curl -X POST http://localhost:8000/api/v1/predict \
 
 ---
 
-# **Step 6: Check Metrics**
+## Step 6: Check Metrics
 
 ```bash
 curl http://localhost:8000/metrics
@@ -173,7 +167,7 @@ model_version_info{model="card_approval_model",version="3"} 1
 
 ---
 
-# **Step 7: Reload Model (Hot Reload)**
+## Step 7: Reload Model
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/model/reload
@@ -194,7 +188,7 @@ curl -X POST http://localhost:8000/api/v1/model/reload
 
 ---
 
-# **Step 8: Run Tests**
+## Step 8: Run Tests
 
 ```bash
 pytest tests/ -v

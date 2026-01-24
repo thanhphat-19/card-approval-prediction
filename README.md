@@ -4,7 +4,7 @@ End-to-end **MLOps pipeline** for credit card approval prediction using machine 
 
 ## 🏗️ Architecture
 
-![Architecture Diagram](./docs/architecture-diagram.jpg)
+![Architecture Diagram](./img/architecture-diagram.jpg)
 
 ## 📑 Table of Contents
 
@@ -20,10 +20,12 @@ End-to-end **MLOps pipeline** for credit card approval prediction using machine 
   - [📡 API Endpoints](#-api-endpoints)
     - [Example Prediction Request](#example-prediction-request)
     - [Example Response](#example-response)
+  - [Demo Video](#demo-video)
   - [📚 Documentation](#-documentation)
   - [🔮 Future Improvements](#-future-improvements)
   - [📄 License](#-license)
-  - [👤 Author](#-author)
+  - [👤 Citation](#-citation)
+  - [Contact](#contact)
 
 ---
 
@@ -212,6 +214,11 @@ curl -X POST "http://localhost:8000/api/v1/predict" \
 
 ---
 
+## Demo Video
+
+[▶ Watch the demo video on Google Drive](https://drive.google.com/drive/folders/1ZjPjfBKeP1AoTEvL-5GgAoK9CSbr1KBx?usp=sharing)
+
+
 
 ## 📚 Documentation
 
@@ -253,6 +260,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👤 Author
+## 👤 Citation
 
-**Thanh Phat** - [GitHub](https://github.com/thanhphat-19)
+If you use Card Approval Prediction in your research, please cite it as follows:
+```
+@software{CardApprovalPrediction2025,
+  author = {Thanh Phat},
+  title = {Card Approval Prediction: End-to-end MLOps pipeline for credit card approval prediction using machine learning on Google Cloud Platform.},
+  year = {2025},
+  url = {https://github.com/thanhphat-19/card-approval-prediction}
+}
+```
+
+## Contact
+
+For questions, issues, or collaborations, please open an issue orcontact thanhphat19@gmail.com
