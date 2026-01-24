@@ -1,0 +1,67 @@
+# =============================================================================
+# Ingress Resources for Card Approval Prediction
+# =============================================================================
+# Deploy: kubectl apply -f k8s/ingress.yaml
+# Access via: http://34.139.72.244/
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: card-approval-ingress
+  namespace: card-approval
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      # Card Approval API: http://<IP>/
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: card-approval-api
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      # Grafana: http://<IP>/grafana/
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: monitoring-grafana
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mlflow-ingress
+  namespace: card-approval-training
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      # MLflow: http://<IP>/mlflow/
+      - path: /mlflow(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: card-approval-training-mlflow
+            port:
+              number: 5000

@@ -1,0 +1,63 @@
+# =============================================================================
+# NGINX Ingress Controller - Card Approval Prediction
+# =============================================================================
+
+ingress-nginx:
+  controller:
+    # Resource configuration for cost optimization
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+    # Replica count
+    replicaCount: 1
+
+    # Service configuration
+    service:
+      # LoadBalancer for external access
+      type: LoadBalancer
+
+      # Annotations for GCP Load Balancer
+      annotations: {}
+      #   cloud.google.com/load-balancer-type: "External"
+
+    # Ingress class configuration
+    ingressClassResource:
+      name: nginx
+      enabled: true
+      default: true
+      controllerValue: "k8s.io/ingress-nginx"
+
+    # Watch all namespaces
+    watchIngressWithoutClass: true
+
+    # Admission webhooks (can disable for simpler setup)
+    admissionWebhooks:
+      enabled: false
+
+    # Metrics for Prometheus
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false  # Enable if using Prometheus Operator
+
+    # Node tolerations for scheduling
+    tolerations:
+      - effect: NoSchedule
+        operator: Exists
+
+    # Config for proxy settings
+    config:
+      proxy-body-size: "50m"
+      proxy-read-timeout: "300"
+      proxy-send-timeout: "300"
+      use-forwarded-headers: "true"
+      compute-full-forwarded-for: "true"
+
+  # Default backend (optional)
+  defaultBackend:
+    enabled: false

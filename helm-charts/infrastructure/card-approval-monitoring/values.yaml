@@ -120,6 +120,11 @@ kube-prometheus:
     ingress:
       enabled: false
 
+    grafana.ini:
+      server:
+        root_url: "http://%(domain)s/grafana/"
+        serve_from_sub_path: true
+
     defaultDashboardsEnabled: true
     defaultDashboardsTimezone: "Asia/Ho_Chi_Minh"
 
