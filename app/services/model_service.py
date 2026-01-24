@@ -61,20 +61,37 @@ class ModelService:
 
             self.model = mlflow.pyfunc.load_model(model_uri)
 
-            # Also load sklearn model for predict_proba support
-            try:
-                self.sklearn_model = mlflow.sklearn.load_model(model_uri)
+            # Try loading native model for predict_proba support
+            # Models are logged with specific flavors (xgboost, lightgbm, catboost, sklearn)
+            self.sklearn_model = self._try_load_native_model(model_uri)
+            if self.sklearn_model is not None:
                 logger.info(
-                    f"✓ Model loaded with predict_proba support: {self.settings.MODEL_NAME} v{self.version}"  # noqa: E501
+                    f"✓ Model loaded with predict_proba support: {self.settings.MODEL_NAME} v{self.version}"
                 )  # noqa: E501
-            except Exception as sklearn_err:
-                logger.warning(f"Could not load sklearn model for predict_proba: {sklearn_err}")
-                self.sklearn_model = None
+            else:
                 logger.info(f"✓ Model loaded (pyfunc only): {self.settings.MODEL_NAME} v{self.version}")  # noqa: E501
 
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             raise RuntimeError(f"Model loading failed: {e}") from e
+
+    def _try_load_native_model(self, model_uri: str):
+        """Try loading model with different MLflow flavors for predict_proba support"""
+        loaders = [
+            ("xgboost", lambda: mlflow.xgboost.load_model(model_uri)),
+            ("lightgbm", lambda: mlflow.lightgbm.load_model(model_uri)),
+            ("catboost", lambda: mlflow.catboost.load_model(model_uri)),
+            ("sklearn", lambda: mlflow.sklearn.load_model(model_uri)),
+        ]
+        for flavor, loader in loaders:
+            try:
+                model = loader()
+                logger.debug(f"Loaded model with {flavor} flavor")
+                return model
+            except Exception:  # noqa: S110
+                continue
+        logger.warning("Could not load native model for predict_proba - probabilities will be unavailable")
+        return None
 
     def predict(self, features):
         """Make prediction with loaded model"""
