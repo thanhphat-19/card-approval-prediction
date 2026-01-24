@@ -24,11 +24,12 @@ postgres:
   port: 5432
   database: "mlflow"
   username: "mlflow"
-  password: "mlflow_password_change_me"
+  password: ""  # Set via --set or values-secrets.yaml
 
 # GCS artifact storage
 gcs:
-  bucket: "product-recsys-mlops-recsys-data"
+  # Format: ${PROJECT_ID}-data or custom bucket name
+  bucket: ""  # Set via --set or values-secrets.yaml
   artifactPath: "mlflow-artifacts"
 
 # Workload Identity for GCS access
@@ -36,7 +37,8 @@ serviceAccount:
   create: true
   name: mlflow-sa
   annotations:
-    iam.gke.io/gcp-service-account: "mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com"
+    # Format: service-account@project-id.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: ""  # Set for Workload Identity
 
 # Ingress configuration
 ingress:

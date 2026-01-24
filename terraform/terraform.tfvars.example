@@ -1,2 +1,19 @@
+# =============================================================================
+# Terraform Variables Example
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# terraform.tfvars is gitignored and will not be committed
+# =============================================================================
+
+# Required: Your GCP Project ID
 project_id = "your-gcp-project-id"
-region     = "us-central1"
+
+# GCP Region and Zone
+region = "us-east1"
+zone   = "us-east1-b"
+
+# GKE Cluster Configuration
+cluster_name   = "card-approval-prediction-gke"
+machine_type   = "e2-standard-4"
+min_node_count = 1
+max_node_count = 2
