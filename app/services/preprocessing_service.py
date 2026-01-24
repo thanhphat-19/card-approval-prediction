@@ -1,6 +1,7 @@
 """Preprocessing service for encoding categorical features before prediction"""
 
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional
 
@@ -67,13 +68,7 @@ class PreprocessingService:
         return pd.DataFrame(df_pca, columns=pc_columns, index=df.index)
 
 
-# Global instance
-_preprocessing_service = None
-
-
+@lru_cache(maxsize=1)
 def get_preprocessing_service(run_id: Optional[str] = None) -> PreprocessingService:
-    """Get or create preprocessing service instance"""
-    global _preprocessing_service  # pylint: disable=global-statement
-    if _preprocessing_service is None or (run_id and _preprocessing_service.run_id != run_id):
-        _preprocessing_service = PreprocessingService(run_id)
-    return _preprocessing_service
+    """Get or create preprocessing service instance (cached singleton)"""
+    return PreprocessingService(run_id)

@@ -60,7 +60,6 @@ class TestHealthEndpoint:
 
         # These fields should exist
         assert "mlflow_connected" in data
-        assert "database_connected" in data
 
 
 class TestDocsEndpoint:

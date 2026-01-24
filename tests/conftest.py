@@ -6,6 +6,7 @@ import os
 import sys
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
@@ -14,39 +15,77 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 @pytest.fixture(scope="session")
-def mock_mlflow():
-    """Mock MLflow to avoid connecting to real server during tests."""
-    with patch("mlflow.set_tracking_uri"), patch("mlflow.pyfunc.load_model") as mock_load:
-        # Create a mock model
-        mock_model = MagicMock()
-        mock_model.predict.return_value = [1]  # Default: Approved
-        mock_load.return_value = mock_model
-        yield mock_model
+def mock_model():
+    """Create a mock ML model with predict and predict_proba."""
+    mock = MagicMock()
+    mock.predict.return_value = np.array([1])  # Default: Approved
+    mock.predict_proba.return_value = np.array([[0.15, 0.85]])  # 85% confidence
+    return mock
 
 
 @pytest.fixture(scope="session")
-def mock_database():
-    """Mock database connection."""
-    with patch("sqlalchemy.create_engine") as mock_engine:
-        mock_conn = MagicMock()
-        mock_engine.return_value.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
-        mock_engine.return_value.connect.return_value.__exit__ = MagicMock(return_value=False)
-        yield mock_engine
+def mock_preprocessing_service():
+    """Create a mock preprocessing service."""
+    import pandas as pd
+
+    mock = MagicMock()
+    # Return a DataFrame with PCA-transformed features
+    mock.preprocess.return_value = pd.DataFrame({"PC1": [0.5], "PC2": [-0.3], "PC3": [0.1]})
+    return mock
 
 
 @pytest.fixture
-def client(mock_mlflow, mock_database):
+def client(mock_model, mock_preprocessing_service):
     """Create test client with mocked dependencies."""
     # Set environment variables for testing
     os.environ["MLFLOW_TRACKING_URI"] = "http://localhost:5000"
-    os.environ["DATABASE_URL"] = "postgresql://test:test@localhost:5432/test"
     os.environ["MODEL_NAME"] = "card_approval_model"
     os.environ["MODEL_STAGE"] = "Production"
 
-    from app.main import app
+    # Patch all external dependencies
+    with patch("app.services.model_service.mlflow") as mock_mlflow, patch(
+        "app.services.preprocessing_service.mlflow"
+    ) as mock_preproc_mlflow, patch(
+        "app.services.preprocessing_service.joblib"
+    ) as mock_joblib, patch(
+        "app.routers.health.mlflow"
+    ) as mock_health_mlflow:
+        # Mock MLflow client for model service
+        mock_client = MagicMock()
+        mock_version = MagicMock()
+        mock_version.version = "1"
+        mock_version.run_id = "test-run-id"
+        mock_version.current_stage = "Production"
+        mock_client.search_model_versions.return_value = [mock_version]
+        mock_mlflow.tracking.MlflowClient.return_value = mock_client
+        mock_mlflow.pyfunc.load_model.return_value = mock_model
 
-    with TestClient(app) as test_client:
-        yield test_client
+        # Mock preprocessing service artifacts loading
+        mock_preproc_mlflow.artifacts.download_artifacts.return_value = "/tmp/mock_artifacts"
+        mock_scaler = MagicMock()
+        mock_scaler.transform.return_value = np.array([[0.5, -0.3, 0.1]])
+        mock_pca = MagicMock()
+        mock_pca.transform.return_value = np.array([[0.5, -0.3, 0.1]])
+        mock_joblib.load.side_effect = [mock_scaler, mock_pca]
+
+        # Mock health check MLflow
+        mock_health_mlflow.search_experiments.return_value = []
+
+        # Clear any cached services
+        from app.services.model_service import get_model_service
+        from app.services.preprocessing_service import get_preprocessing_service
+
+        get_model_service.cache_clear()
+        get_preprocessing_service.cache_clear()
+
+        from app.main import app
+
+        with TestClient(app) as test_client:
+            yield test_client
+
+        # Clean up caches after test
+        get_model_service.cache_clear()
+        get_preprocessing_service.cache_clear()
 
 
 @pytest.fixture

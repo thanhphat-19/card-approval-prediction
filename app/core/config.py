@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     LOG_FILE: str = "logs/app.log"
     LOG_FORMAT: str = "text"
 
+    # CORS - comma-separated list of allowed origins (use "*" for development only)
+    CORS_ORIGINS: str = "*"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

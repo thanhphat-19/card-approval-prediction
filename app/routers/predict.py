@@ -26,10 +26,18 @@ async def predict(
 
         # Predict
         prediction_result = model_service.predict(df_processed)
-        if hasattr(prediction_result, "__iter__"):
-            prediction = int(prediction_result[0])
+        prediction = int(prediction_result[0])
+
+        # Get probability if available
+        proba_result = model_service.predict_proba(df_processed)
+        if proba_result is not None:
+            # proba_result shape: (n_samples, n_classes) -> [[prob_class_0, prob_class_1]]
+            prob_approved = float(proba_result[0][1])  # Probability of class 1 (Approved)
+            confidence = float(max(proba_result[0]))  # Confidence = max probability
         else:
-            prediction = int(prediction_result)
+            # Fallback if predict_proba not available
+            prob_approved = float(prediction)
+            confidence = 1.0
 
         # Format response
         # Label mapping from training:
@@ -39,14 +47,14 @@ async def predict(
 
         logger.info(
             f"Prediction completed: customer_id={input_data.ID}, "
-            f"decision={decision}, income={input_data.AMT_INCOME_TOTAL}"
+            f"decision={decision}, probability={prob_approved:.3f}, income={input_data.AMT_INCOME_TOTAL}"  # noqa: E501
         )
 
         return PredictionOutput(
             prediction=prediction,
-            probability=float(prediction),  # Binary: 0.0 or 1.0
+            probability=prob_approved,
             decision=decision,
-            confidence=1.0,  # Always confident in binary predictions
+            confidence=confidence,
             version=model_service.get_model_info()["version"],
         )
 
