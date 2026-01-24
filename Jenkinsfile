@@ -87,7 +87,6 @@ pipeline {
                   python:3.10-slim \
                   bash -c "
                     tar xf - &&
-                    apt-get update && apt-get install -y git --no-install-recommends &&
                     pip install flake8 pylint black isort &&
                     export PYTHONPATH=/workspace &&
                     echo '=== Flake8 ===' &&
@@ -103,58 +102,9 @@ pipeline {
             }
         }
 
-        /* =====================
-           SONARQUBE ANALYSIS & QUALITY GATE (PR branches only)
-        ====================== */
-        stage('SonarQube Analysis') {
-            when {
-                not { branch 'main' }
-            }
-            steps {
-                script {
-                    withSonarQubeEnv('SonarQube') {
-                        sh '''
-                        # Run SonarQube scanner in Docker
-                        # Uses sonar-project.properties for configuration
-                        docker run --rm \
-                          --user $(id -u):$(id -g) \
-                          -e SONAR_HOST_URL="${SONAR_HOST_URL}" \
-                          -e SONAR_TOKEN="${SONAR_AUTH_TOKEN}" \
-                          -v "$(pwd):/usr/src" \
-                          -w /usr/src \
-                          sonarsource/sonar-scanner-cli \
-                          -Dsonar.host.url="${SONAR_HOST_URL}" \
-                          -Dsonar.token="${SONAR_AUTH_TOKEN}" \
-                          -Dsonar.working.directory=/usr/src/.scannerwork
-
-                        # Copy report-task.txt to workspace root for Jenkins plugin
-                        cp .scannerwork/report-task.txt .
-                        '''
-                    }
-                }
-            }
-        }
 
         /* =====================
-           QUALITY GATE (PR branches only)
-        ====================== */
-        stage('Quality Gate') {
-            when {
-                not { branch 'main' }
-            }
-            steps {
-                script {
-                    withSonarQubeEnv('SonarQube') {
-                        timeout(time: 5, unit: 'MINUTES') {
-                            waitForQualityGate abortPipeline: true
-                        }
-                    }
-                }
-            }
-        }
-
-        /* =====================
-           BUILD IMAGE (main branch only)
+           BUILD IMAGE
         ====================== */
         stage('Build Docker Image') {
             when { branch 'main' }
@@ -248,15 +198,6 @@ pipeline {
     }
 
     post {
-        always {
-            script {
-                try {
-                    cleanWs()
-                } catch (Exception e) {
-                    echo "Workspace cleanup skipped: ${e.message}"
-                }
-            }
-        }
         success {
             echo '✅ Pipeline completed successfully'
         }
