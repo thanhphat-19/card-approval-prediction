@@ -87,6 +87,7 @@ pipeline {
                   python:3.10-slim \
                   bash -c "
                     tar xf - &&
+                    apt-get update && apt-get install -y git --no-install-recommends &&
                     pip install flake8 pylint black isort &&
                     export PYTHONPATH=/workspace &&
                     echo '=== Flake8 ===' &&
