@@ -87,6 +87,7 @@ pipeline {
                   python:3.10-slim \
                   bash -c "
                     tar xf - &&
+                    apt-get update && apt-get install -y git --no-install-recommends &&
                     pip install flake8 pylint black isort &&
                     export PYTHONPATH=/workspace &&
                     echo '=== Flake8 ===' &&
@@ -122,10 +123,11 @@ pipeline {
                           -w /usr/src \
                           sonarsource/sonar-scanner-cli \
                           -Dsonar.host.url="${SONAR_HOST_URL}" \
-                          -Dsonar.token="${SONAR_AUTH_TOKEN}"
+                          -Dsonar.token="${SONAR_AUTH_TOKEN}" \
+                          -Dsonar.working.directory=/usr/src/.scannerwork
 
                         # Copy report-task.txt to workspace root for Jenkins plugin
-                        cp .scannerwork/report-task.txt . || true
+                        cp .scannerwork/report-task.txt .
                         '''
                     }
                 }
