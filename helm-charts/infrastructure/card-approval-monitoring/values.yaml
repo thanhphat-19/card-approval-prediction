@@ -22,6 +22,10 @@ kube-prometheus:
         memory: 128Mi
     admissionWebhooks:
       enabled: false
+      patch:
+        enabled: false
+    tls:
+      enabled: false
 
   # Prometheus Server
   prometheus:
@@ -95,7 +99,7 @@ kube-prometheus:
       - effect: NoSchedule
         operator: Exists
     adminUser: admin
-    adminPassword: "card-approval-grafana-2025"
+    adminPassword: ""  # Set via --set or values-secrets.yaml
 
     # Resource limits
     resources:
@@ -115,6 +119,11 @@ kube-prometheus:
 
     ingress:
       enabled: false
+
+    grafana.ini:
+      server:
+        root_url: "http://%(domain)s/grafana/"
+        serve_from_sub_path: true
 
     defaultDashboardsEnabled: true
     defaultDashboardsTimezone: "Asia/Ho_Chi_Minh"
@@ -146,7 +155,7 @@ kube-prometheus:
     additionalDataSources:
       - name: Loki
         type: loki
-        url: http://prometheus-loki-gateway.monitoring.svc.cluster.local
+        url: http://monitoring-loki-gateway.monitoring.svc.cluster.local
         access: proxy
         isDefault: false
         jsonData:
@@ -387,7 +396,7 @@ alloy:
         // Send logs to Loki
         loki.write "default" {
           endpoint {
-            url = "http://prometheus-loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"
+            url = "http://monitoring-loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"
           }
         }
 
