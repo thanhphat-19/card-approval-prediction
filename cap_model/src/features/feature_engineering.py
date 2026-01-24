@@ -2,6 +2,7 @@
 Feature engineering and preprocessing module
 """
 
+import json
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -64,15 +65,25 @@ class FeatureEngineer:
         """
         logger.info("Splitting data into train and test sets...")
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=self.random_state)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=self.random_state
+        )
 
         logger.info("Data Split:")
         logger.info(f"  Training: {X_train.shape[0]:,} samples")
-        logger.info(f"    - Good (1): {(y_train == 1).sum():,} ({(y_train == 1).sum() / len(y_train) * 100:.2f}%)")
-        logger.info(f"    - Bad (0): {(y_train == 0).sum():,} ({(y_train == 0).sum() / len(y_train) * 100:.2f}%)")
+        logger.info(
+            f"    - Good (1): {(y_train == 1).sum():,} ({(y_train == 1).sum() / len(y_train) * 100:.2f}%)"  # noqa: E501
+        )
+        logger.info(
+            f"    - Bad (0): {(y_train == 0).sum():,} ({(y_train == 0).sum() / len(y_train) * 100:.2f}%)"  # noqa: E501
+        )
         logger.info(f"  Test: {X_test.shape[0]:,} samples")
-        logger.info(f"    - Good (1): {(y_test == 1).sum():,} ({(y_test == 1).sum() / len(y_test) * 100:.2f}%)")
-        logger.info(f"    - Bad (0): {(y_test == 0).sum():,} ({(y_test == 0).sum() / len(y_test) * 100:.2f}%)")
+        logger.info(
+            f"    - Good (1): {(y_test == 1).sum():,} ({(y_test == 1).sum() / len(y_test) * 100:.2f}%)"  # noqa: E501
+        )
+        logger.info(
+            f"    - Bad (0): {(y_test == 0).sum():,} ({(y_test == 0).sum() / len(y_test) * 100:.2f}%)"  # noqa: E501
+        )
 
         return X_train, X_test, y_train, y_test
 
@@ -129,7 +140,9 @@ class FeatureEngineer:
             logger.info("Skipping PCA transformation")
 
         # 5. Train-test split
-        X_train, X_test, y_train, y_test = self.train_test_split_data(X_transformed, y_resampled, test_size=test_size)
+        X_train, X_test, y_train, y_test = self.train_test_split_data(
+            X_transformed, y_resampled, test_size=test_size
+        )
 
         # 6. Save preprocessors if requested
         if save_preprocessors and output_dir:
@@ -150,8 +163,6 @@ class FeatureEngineer:
 
             # Save feature names for inference alignment
             if self.feature_names:
-                import json
-
                 features_path = output_path / "feature_names.json"
                 with open(features_path, "w") as f:
                     json.dump({"feature_names": self.feature_names}, f, indent=2)

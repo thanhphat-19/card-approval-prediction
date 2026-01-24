@@ -42,7 +42,6 @@ async def health_check():
         version=settings.APP_VERSION,
         timestamp=datetime.utcnow(),
         mlflow_connected=mlflow_connected,
-        database_connected=False,
     )
 
 

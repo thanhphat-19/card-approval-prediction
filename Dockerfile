@@ -15,7 +15,7 @@ RUN pip install --upgrade pip && \
 # Copy requirements first for better caching
 COPY ./pyproject.toml .
 RUN uv pip install . --system --no-cache-dir
-RUN mkdir -p /app/reports.
+RUN mkdir -p /app/reports
 
 # Copy the rest of the application
 COPY . .

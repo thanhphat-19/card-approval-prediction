@@ -18,7 +18,7 @@ class TestHealthCheck:
         response = client.get("/health")
         data = response.json()
 
-        required_fields = ["status", "version", "mlflow_connected", "database_connected"]
+        required_fields = ["status", "version", "mlflow_connected"]
         for field in required_fields:
             assert field in data, f"Missing field: {field}"
 
@@ -36,7 +36,6 @@ class TestHealthCheck:
         data = response.json()
 
         assert isinstance(data["mlflow_connected"], bool)
-        assert isinstance(data["database_connected"], bool)
 
 
 class TestHealthDegraded:
@@ -44,16 +43,16 @@ class TestHealthDegraded:
 
     def test_health_with_mlflow_down(self, client):
         """Test health when MLflow is unavailable."""
-        with patch("app.routers.health.check_mlflow_connection", return_value=False):
+        # Mock mlflow.search_experiments to raise an exception
+        with patch(
+            "app.routers.health.mlflow.search_experiments",
+            side_effect=Exception("Connection failed"),
+        ):
             response = client.get("/health")
             assert response.status_code == 200
-            # Status should be degraded or unhealthy
-
-    def test_health_with_database_down(self, client):
-        """Test health when database is unavailable."""
-        with patch("app.routers.health.check_database_connection", return_value=False):
-            response = client.get("/health")
-            assert response.status_code == 200
+            data = response.json()
+            # Status should be degraded when MLflow is down
+            assert data["status"] in ["degraded", "unhealthy"]
 
 
 class TestLiveness:
@@ -91,4 +90,3 @@ class TestReadiness:
 
         # Should check core services
         assert "mlflow_connected" in data
-        assert "database_connected" in data

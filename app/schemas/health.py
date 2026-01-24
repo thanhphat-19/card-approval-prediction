@@ -11,7 +11,6 @@ class HealthResponse(BaseModel):
     version: str
     timestamp: datetime
     mlflow_connected: bool = False
-    database_connected: bool = False
 
     class Config:
         json_schema_extra = {
@@ -20,6 +19,5 @@ class HealthResponse(BaseModel):
                 "version": "1.0.0",
                 "timestamp": "2025-12-13T11:30:00",
                 "mlflow_connected": True,
-                "database_connected": True,
             }
         }

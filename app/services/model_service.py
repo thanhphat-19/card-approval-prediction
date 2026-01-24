@@ -1,5 +1,6 @@
 """Model service for loading and managing ML models from MLflow."""
 import os
+from functools import lru_cache
 
 import mlflow
 from loguru import logger
@@ -78,6 +79,30 @@ class ModelService:
             logger.error(f"Prediction failed: {e}")
             raise
 
+    def predict_proba(self, features):
+        """Get prediction probabilities from loaded model"""
+        if self.model is None:
+            raise RuntimeError("Model not loaded")
+
+        try:
+            # Access underlying model for predict_proba
+            unwrapped_model = self.model.unwrap_python_model()
+            if hasattr(unwrapped_model, "predict_proba"):
+                return unwrapped_model.predict_proba(features)
+
+            # Try accessing _model_impl for sklearn-style models
+            if hasattr(self.model, "_model_impl"):
+                impl = self.model._model_impl
+                if hasattr(impl, "python_model") and hasattr(impl.python_model, "predict_proba"):
+                    return impl.python_model.predict_proba(features)
+
+            # Fallback: return None if predict_proba not available
+            logger.warning("Model does not support predict_proba")
+            return None
+        except Exception as e:
+            logger.warning(f"predict_proba failed, falling back to predict: {e}")
+            return None
+
     def get_model_info(self):
         """Get model information"""
         return {
@@ -94,16 +119,8 @@ class ModelService:
         self._load_model()
 
 
-# Global instance
-_model_service = None
-
-
+@lru_cache(maxsize=1)
 def get_model_service() -> ModelService:
-    """Get or create model service instance"""
-    global _model_service  # pylint: disable=global-statement
-    if _model_service is None:
-        logger.info("Initializing model service")
-        _model_service = ModelService()
-    else:
-        logger.debug("Reusing cached model service")
-    return _model_service
+    """Get or create model service instance (cached singleton)"""
+    logger.info("Initializing model service")
+    return ModelService()

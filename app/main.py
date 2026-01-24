@@ -45,12 +45,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# CORS middleware - configure allowed origins based on environment
+# In production, set CORS_ORIGINS environment variable to restrict origins
+cors_origins = (
+    settings.CORS_ORIGINS.split(",")
+    if hasattr(settings, "CORS_ORIGINS") and settings.CORS_ORIGINS
+    else ["*"]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=True
+    if cors_origins != ["*"]
+    else False,  # Don't allow credentials with wildcard
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
