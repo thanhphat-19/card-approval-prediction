@@ -39,6 +39,8 @@ pipeline {
         ====================== */
         stage('Checkout') {
             steps {
+                // Clean up any leftover secrets from previous failed runs
+                sh 'rm -rf .tmp-deploy'
                 checkout scm
                 script {
                     env.GIT_COMMIT = sh(
@@ -184,8 +186,10 @@ pipeline {
                           /deploy/helm-charts/card-approval \
                           --namespace ${GKE_NAMESPACE} \
                           --create-namespace \
+                          --reuse-values \
                           --set api.image.repository=${REGISTRY}/${REPOSITORY}/${IMAGE_NAME} \
                           --set api.image.tag=${IMAGE_TAG} \
+                          --timeout 10m \
                           --wait \
                           --atomic
                       "
@@ -198,6 +202,10 @@ pipeline {
     }
 
     post {
+        always {
+            // Always clean up secrets, even on failure
+            sh 'rm -rf .tmp-deploy || true'
+        }
         success {
             echo '✅ Pipeline completed successfully'
         }
