@@ -90,3 +90,13 @@ docs/
 # ============================================
 cap_model/scripts/
 KISS_CLEANUP_SCRIPT.sh
+
+# ============================================
+# CI/CD & Secrets
+# ============================================
+.tmp-deploy/
+*.json
+!app/**/*.json
+Jenkinsfile
+ansible/
+scripts/
