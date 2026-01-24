@@ -14,6 +14,7 @@ class ModelService:
     def __init__(self):
         self.settings = get_settings()
         self.model = None
+        self.sklearn_model = None  # For predict_proba support
         self.version = None
         self.run_id = None
         self._load_model()
@@ -41,14 +42,12 @@ class ModelService:
             model_versions = client.search_model_versions(filter_string=filter_string)
 
             # Filter by stage and get the latest
-            stage_versions = [
-                v for v in model_versions if v.current_stage == self.settings.MODEL_STAGE
-            ]
+            stage_versions = [v for v in model_versions if v.current_stage == self.settings.MODEL_STAGE]  # noqa: E501
 
             if not stage_versions:
                 raise ValueError(
                     f"No model version found for {self.settings.MODEL_NAME} "
-                    f"in {self.settings.MODEL_STAGE} stage"
+                    f"in {self.settings.MODEL_STAGE} stage"  # noqa: E501
                 )
 
             # Sort by version number (descending) and get the latest
@@ -61,7 +60,17 @@ class ModelService:
             logger.info(f"Model run ID: {self.run_id}")
 
             self.model = mlflow.pyfunc.load_model(model_uri)
-            logger.info(f"✓ Model loaded: {self.settings.MODEL_NAME} v{self.version}")
+
+            # Also load sklearn model for predict_proba support
+            try:
+                self.sklearn_model = mlflow.sklearn.load_model(model_uri)
+                logger.info(
+                    f"✓ Model loaded with predict_proba support: {self.settings.MODEL_NAME} v{self.version}"  # noqa: E501
+                )  # noqa: E501
+            except Exception as sklearn_err:
+                logger.warning(f"Could not load sklearn model for predict_proba: {sklearn_err}")
+                self.sklearn_model = None
+                logger.info(f"✓ Model loaded (pyfunc only): {self.settings.MODEL_NAME} v{self.version}")  # noqa: E501
 
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
@@ -81,27 +90,15 @@ class ModelService:
 
     def predict_proba(self, features):
         """Get prediction probabilities from loaded model"""
-        if self.model is None:
-            raise RuntimeError("Model not loaded")
+        if self.sklearn_model is not None and hasattr(self.sklearn_model, "predict_proba"):
+            try:
+                return self.sklearn_model.predict_proba(features)
+            except Exception as e:
+                logger.warning(f"predict_proba failed: {e}")
+                return None
 
-        try:
-            # Access underlying model for predict_proba
-            unwrapped_model = self.model.unwrap_python_model()
-            if hasattr(unwrapped_model, "predict_proba"):
-                return unwrapped_model.predict_proba(features)
-
-            # Try accessing _model_impl for sklearn-style models
-            if hasattr(self.model, "_model_impl"):
-                impl = self.model._model_impl
-                if hasattr(impl, "python_model") and hasattr(impl.python_model, "predict_proba"):
-                    return impl.python_model.predict_proba(features)
-
-            # Fallback: return None if predict_proba not available
-            logger.warning("Model does not support predict_proba")
-            return None
-        except Exception as e:
-            logger.warning(f"predict_proba failed, falling back to predict: {e}")
-            return None
+        # Fallback: return None if predict_proba not available
+        return None
 
     def get_model_info(self):
         """Get model information"""
