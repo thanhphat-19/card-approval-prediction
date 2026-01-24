@@ -15,17 +15,23 @@ pipeline {
     }
 
     environment {
-        // GCP
-        PROJECT_ID    = 'product-recsys-mlops'
-        ZONE          = 'us-east1-b'
-        GKE_CLUSTER   = 'card-approval-prediction-mlops-gke'
+        // =============================================================
+        // GCP Configuration - Set these in Jenkins credentials or here
+        // =============================================================
+        // To override: Manage Jenkins > Credentials > Add credentials
+        // Or set as Jenkins environment variables
+        PROJECT_ID    = credentials('gcp-project-id')    // Create a 'Secret text' credential
+        ZONE          = "${env.GCP_ZONE ?: 'us-east1-b'}"
+        REGION        = "${env.GCP_REGION ?: 'us-east1'}"
+
+        // GKE Configuration
+        GKE_CLUSTER   = "${env.GKE_CLUSTER_NAME ?: 'card-approval-prediction-mlops-gke'}"
         GKE_NAMESPACE = 'card-approval'
 
-        // Docker
-        REGION     = 'us-east1'
-        REGISTRY   = "${REGION}-docker.pkg.dev"
-        REPOSITORY = "${PROJECT_ID}/product-recsys-mlops-recsys"
-        IMAGE_NAME = 'card-approval-api'
+        // Docker Registry
+        REGISTRY      = "${REGION}-docker.pkg.dev"
+        REPOSITORY    = "${PROJECT_ID}/${env.DOCKER_REPO_NAME ?: 'card-approval-repo'}"
+        IMAGE_NAME    = 'card-approval-api'
     }
 
     stages {
@@ -48,25 +54,22 @@ pipeline {
         }
 
         /* =====================
-           SKIP MERGED BRANCHES
+           CHECK BRANCH TYPE
         ====================== */
         stage('Check Branch') {
             steps {
                 script {
-                    // Only build main branch and active PR branches
-                    def validBranches = ['main', 'master', 'develop']
-                    def isPRBranch = env.BRANCH_NAME?.startsWith('PR-') ||
-                                     env.BRANCH_NAME?.startsWith('feature/') ||
-                                     env.BRANCH_NAME?.startsWith('fix/') ||
-                                     env.BRANCH_NAME?.startsWith('refactor/')
-
-                    if (!validBranches.contains(env.BRANCH_NAME) && !isPRBranch) {
-                        echo "⏭️ Skipping build for branch: ${env.BRANCH_NAME}"
-                        currentBuild.result = 'NOT_BUILT'
-                        error("Branch ${env.BRANCH_NAME} is not configured for CI. Skipping.")
-                    }
-
                     echo "✅ Building branch: ${env.BRANCH_NAME}"
+
+                    // Determine if this is main branch or a PR branch
+                    def isMainBranch = env.BRANCH_NAME in ['main', 'master', 'develop']
+                    env.IS_MAIN_BRANCH = isMainBranch ? 'true' : 'false'
+
+                    if (isMainBranch) {
+                        echo "📦 Main branch detected - will build, push, and deploy"
+                    } else {
+                        echo "🔍 Feature branch detected - will run tests and SonarQube analysis"
+                    }
                 }
             }
         }
@@ -195,9 +198,6 @@ pipeline {
     }
 
     post {
-        always {
-            cleanWs()
-        }
         success {
             echo '✅ Pipeline completed successfully'
         }

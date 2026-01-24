@@ -54,7 +54,6 @@
                 - "9000:9000"
               environment:
                 - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
-                - SONAR_JDBC_URL=jdbc:h2:tcp://sonarqube-db:9092/sonar
               volumes:
                 - sonarqube_data:/opt/sonarqube/data
                 - sonarqube_extensions:/opt/sonarqube/extensions
@@ -92,6 +91,12 @@
         host: 0.0.0.0
         delay: 30
         timeout: 300
+
+    - name: Install Docker CLI inside Jenkins container
+      shell: |
+        docker exec jenkins bash -c "apt-get update && apt-get install -y docker.io"
+      register: docker_install
+      ignore_errors: yes
 
     - name: Check if Jenkins is already configured
       stat:

@@ -9,7 +9,7 @@ postgres:
 
   database: card_approval_db
   username: app_user
-  password: phatngothanh19
+  password: ""  # Set via --set or values-secrets.yaml
 
   service:
     port: 5432
@@ -59,7 +59,8 @@ api:
   enabled: true
 
   image:
-    repository: us-east1-docker.pkg.dev/product-recsys-mlops/product-recsys-mlops-recsys/card-approval-api
+    # Format: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}
+    repository: ""  # Set via --set or values-secrets.yaml
     tag: "latest"
     pullPolicy: Always
 
@@ -95,7 +96,7 @@ api:
     port: 5432
     database: "card_approval_db"
     username: "app_user"
-    password: "phatngothanh19"
+    password: ""  # Set via --set or values-secrets.yaml
 
   # Redis connection
   redis:
@@ -107,7 +108,8 @@ api:
     create: true
     name: card-approval-api-sa
     annotations:
-      iam.gke.io/gcp-service-account: "mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com"
+      # Format: service-account@project-id.iam.gserviceaccount.com
+      iam.gke.io/gcp-service-account: ""  # Set for Workload Identity
 
   # Autoscaling
   autoscaling:

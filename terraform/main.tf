@@ -20,8 +20,8 @@ provider "google" {
 # GKE Cluster (Standard Mode)
 # ============================================
 resource "google_container_cluster" "primary" {
-  name     = "card-approval-prediction-mlops-gke"
-  location = "us-east1-b"
+  name     = var.cluster_name
+  location = var.zone
 
   # Standard mode
   remove_default_node_pool = true
@@ -41,20 +41,20 @@ resource "google_container_cluster" "primary" {
 # ============================================
 resource "google_container_node_pool" "primary_nodes" {
   name       = "primary-node-pool"
-  location   = "us-east1-b"
+  location   = var.zone
   cluster    = google_container_cluster.primary.name
 
   # Autoscaling configuration
-  initial_node_count = 1
+  initial_node_count = var.min_node_count
 
   autoscaling {
-    min_node_count = 1
-    max_node_count = 2
+    min_node_count = var.min_node_count
+    max_node_count = var.max_node_count
   }
 
   node_config {
     # Machine type
-    machine_type = "e2-standard-4"
+    machine_type = var.machine_type
     disk_size_gb = 30
     disk_type    = "pd-standard"
 
@@ -71,7 +71,7 @@ resource "google_container_node_pool" "primary_nodes" {
       environment = "production"
     }
 
-    tags = ["gke-node", "card-approval-prediction-mlops-gke"]
+    tags = ["gke-node", var.cluster_name]
   }
 
   management {

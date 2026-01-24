@@ -39,6 +39,7 @@ graph TB
 
 | # | Document | Description |
 |---|----------|-------------|
+| 00 | [**Setup Guide**](./00_Setup_Guide.md) | ⚙️ **Start here!** Configuration & setup |
 | 01 | [Terraform Setup](./01_Terraform.md) | GCP infrastructure setup |
 | 02 | [Terraform Architecture](./02_terraform_architecture.md) | Infrastructure design |
 | 03 | [Helm Deployment](./03_Helm_Deployment.md) | Kubernetes deployment |
@@ -55,18 +56,26 @@ graph TB
 # 1. Clone and setup
 git clone https://github.com/your-org/card-approval-prediction.git
 cd card-approval-prediction
+
+# 2. Configure your environment (see Setup Guide for details)
+cp config.example.env config.env
+# Edit config.env with your GCP project ID and passwords
+
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 2. Start local services
+# 4. Start local services
 docker-compose up -d
 
-# 3. Run API
+# 5. Run API locally
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# 4. Access services
+# 6. Access services
 open http://localhost:8000/docs    # API Documentation
 open http://localhost:5000         # MLflow UI
 ```
+
+> 📖 **For full deployment instructions**, see the [Setup Guide](./00_Setup_Guide.md)
 
 ---
 

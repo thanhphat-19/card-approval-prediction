@@ -9,7 +9,7 @@ postgres:
 
   database: mlflow
   username: mlflow
-  password: thanhphat192001
+  password: ""  # Set via --set or values-secrets.yaml
 
   service:
     port: 5432
@@ -50,11 +50,12 @@ mlflow:
     port: 5432
     database: "mlflow"
     username: "mlflow"
-    password: "thanhphat192001"
+    password: ""  # Set via --set or values-secrets.yaml
 
   # GCS artifact storage
   gcs:
-    bucket: "product-recsys-mlops-recsys-data"
+    # Format: ${PROJECT_ID}-data or custom bucket name
+    bucket: ""  # Set via --set or values-secrets.yaml
     artifactPath: "mlflow-artifacts"
 
   # Workload Identity for GCS access

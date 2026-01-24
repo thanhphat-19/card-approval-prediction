@@ -1,24 +1,43 @@
+# =============================================================================
 # Global variables for all hosts
+# =============================================================================
+# NOTE: Override these values in your inventory or via -e flag
+# Example: ansible-playbook playbook.yml -e "gcp_project_id=my-project"
+# Or source config.env before running ansible
+# =============================================================================
 
 # GCP Configuration
-gcp_project_id: "product-recsys-mlops"
-gcp_region: "us-east1"
-gcp_zone: "us-east1-b"
+gcp_project_id: "{{ lookup('env', 'GCP_PROJECT_ID') | default('your-gcp-project-id', true) }}"
+gcp_region: "{{ lookup('env', 'GCP_REGION') | default('us-east1', true) }}"
+gcp_zone: "{{ lookup('env', 'GCP_ZONE') | default('us-east1-b', true) }}"
+
+# GKE Configuration (for Jenkins to deploy)
+gke_cluster_name: "{{ lookup('env', 'GKE_CLUSTER_NAME') | default('card-approval-prediction-mlops-gke', true) }}"
+gke_namespace: "{{ lookup('env', 'GKE_NAMESPACE') | default('card-approval', true) }}"
 
 # Jenkins Configuration
 jenkins_port: 8080
-jenkins_admin_user: "admin"
-jenkins_admin_password: "admin123"  # Change this in production
+jenkins_admin_user: "{{ lookup('env', 'JENKINS_ADMIN_USER') | default('admin', true) }}"
+jenkins_admin_password: "{{ lookup('env', 'JENKINS_ADMIN_PASSWORD') | default('change-me-in-production', true) }}"
 jenkins_home: "/var/jenkins_home"
 
-# Docker Registry
-docker_registry: "us-east1-docker.pkg.dev"
-docker_repository: "{{ gcp_project_id }}/product-recsys-mlops-recsys"
+# Docker Registry (matches config.env)
+docker_registry: "{{ lookup('env', 'DOCKER_REGISTRY') | default(gcp_region + '-docker.pkg.dev', true) }}"
+docker_repository: "{{ lookup('env', 'DOCKER_REPOSITORY') | default(gcp_project_id + '/product-recsys-mlops-recsys', true) }}"
+image_name: "{{ lookup('env', 'IMAGE_NAME') | default('card-approval-api', true) }}"
 
 # SonarQube Configuration
 sonarqube_url: "http://localhost:9000"
-sonarqube_token: ""
+sonarqube_jdbc_username: "{{ lookup('env', 'SONARQUBE_JDBC_USERNAME') | default('sonar', true) }}"
+sonarqube_jdbc_password: "{{ lookup('env', 'SONARQUBE_JDBC_PASSWORD') | default('sonar', true) }}"
 
 # GitHub Configuration
-github_repo: "https://github.com/yourusername/card-approval-prediction"
-github_branch: "main"
+github_repo_owner: "{{ lookup('env', 'GITHUB_REPO_OWNER') | default('your-github-username', true) }}"
+github_repo_name: "{{ lookup('env', 'GITHUB_REPO_NAME') | default('card-approval-prediction', true) }}"
+github_repo: "https://github.com/{{ github_repo_owner }}/{{ github_repo_name }}"
+github_branch: "{{ lookup('env', 'GITHUB_BRANCH') | default('main', true) }}"
+github_token: "{{ lookup('env', 'GITHUB_TOKEN') | default('', true) }}"
+
+# GCP Service Account
+gcp_service_account: "{{ lookup('env', 'GCP_MLFLOW_SERVICE_ACCOUNT') | default('mlflow-gcs@' + gcp_project_id + '.iam.gserviceaccount.com', true) }}"
+gcp_key_path: "{{ lookup('env', 'GCP_KEY_PATH') | default('~/secrets/gcp-key.json', true) }}"
