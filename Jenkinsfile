@@ -184,6 +184,7 @@ pipeline {
                           /deploy/helm-charts/card-approval \
                           --namespace ${GKE_NAMESPACE} \
                           --create-namespace \
+                          --set api.image.repository=${REGISTRY}/${REPOSITORY}/${IMAGE_NAME} \
                           --set api.image.tag=${IMAGE_TAG} \
                           --wait \
                           --atomic
