@@ -228,8 +228,6 @@ credentials.json
 *.backup
 *~
 
-# document
-docs/
 
 # Crash logs
 crash.log
@@ -255,3 +253,17 @@ catboost_info/
 
 # Secrets folder
 secrets/
+
+# =============================================================================
+# Configuration files with real values
+# =============================================================================
+config.env
+.env.local
+*.secrets.yaml
+values-production.yaml
+values-secrets.yaml
+values-local.yaml
+
+# Ansible vault files
+*.vault.yml
+vault.yml
