@@ -57,10 +57,10 @@ def main():
 
         logger.info(f"✓ Created target labels for {len(target_data):,} customers")
         logger.info(
-            f"  Good (1): {(target_data['Label'] == 1).sum():,} ({(target_data['Label'] == 1).sum() / len(target_data) * 100:.1f}%)"
+            f"  Good (1): {(target_data['Label'] == 1).sum():,} ({(target_data['Label'] == 1).sum() / len(target_data) * 100:.1f}%)"  # noqa: E501
         )
         logger.info(
-            f"  Bad (0):  {(target_data['Label'] == 0).sum():,} ({(target_data['Label'] == 0).sum() / len(target_data) * 100:.1f}%)"
+            f"  Bad (0):  {(target_data['Label'] == 0).sum():,} ({(target_data['Label'] == 0).sum() / len(target_data) * 100:.1f}%)"  # noqa: E501
         )
 
         # 3. Merge Data

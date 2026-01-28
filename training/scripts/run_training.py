@@ -21,11 +21,7 @@ from src.utils.metrics import get_classification_report  # noqa: E402
 from src.utils.mlflow_artifacts import MLflowArtifactManager  # noqa: E402
 
 # Import plotting functions
-from src.utils.plotting import (  # noqa: E402
-    plot_confusion_matrix,
-    plot_precision_recall_curve,
-    plot_roc_curve,
-)
+from src.utils.plotting import plot_confusion_matrix, plot_precision_recall_curve, plot_roc_curve  # noqa: E402
 
 warnings.filterwarnings("ignore")
 
@@ -170,9 +166,7 @@ def main():
         output_path.mkdir(parents=True, exist_ok=True)
 
         # Save best model
-        best_model_path, metadata_path = trainer.save_best_model(
-            args.output_dir, metric=args.metric
-        )
+        best_model_path, metadata_path = trainer.save_best_model(args.output_dir, metric=args.metric)
         logger.info(f"✓ Best model saved to: {best_model_path}")
         logger.info(f"✓ Model metadata saved to: {metadata_path}")
 
@@ -182,9 +176,7 @@ def main():
             import mlflow
 
             with mlflow.start_run(run_id=trainer.best_model_run_id):
-                MLflowArtifactManager.log_preprocessing_artifacts(
-                    scaler=scaler, pca=pca, feature_names=feature_names
-                )
+                MLflowArtifactManager.log_preprocessing_artifacts(scaler=scaler, pca=pca, feature_names=feature_names)
             logger.info("✓ Preprocessing artifacts logged to MLflow")
         else:
             logger.warning("Could not log preprocessing artifacts - no run_id available")
@@ -205,9 +197,7 @@ def main():
 
         # Generate predictions
         y_pred = best_model.predict(X_test)
-        y_pred_proba = (
-            best_model.predict_proba(X_test)[:, 1] if hasattr(best_model, "predict_proba") else None
-        )
+        y_pred_proba = best_model.predict_proba(X_test)[:, 1] if hasattr(best_model, "predict_proba") else None
 
         # Create evaluation directory
         eval_dir = output_path / "evaluation"
@@ -226,9 +216,7 @@ def main():
                 y_pred_proba,
                 save_path=str(eval_dir / "precision_recall_curve.png"),
             )
-            logger.info(
-                f"✓ Precision-Recall curve saved to: {eval_dir / 'precision_recall_curve.png'}"
-            )
+            logger.info(f"✓ Precision-Recall curve saved to: {eval_dir / 'precision_recall_curve.png'}")
 
         # Save classification report
         report = get_classification_report(y_test, y_pred)
@@ -265,22 +253,20 @@ def main():
                 best_run_id = trainer.best_model_run_id
 
                 # Register model
-                registration_info = registry.register_model(
-                    run_id=best_run_id, model_name=args.model_name
-                )
+                registration_info = registry.register_model(run_id=best_run_id, model_name=args.model_name)
 
                 model_version = registration_info["version"]
 
                 # Add description to the registered version
-                description = f"Auto-registered: {trainer.best_model_name} | {args.metric}={trainer.best_score}"  # noqa: E501
+                description = (
+                    f"Auto-registered: {trainer.best_model_name} | {args.metric}={trainer.best_score}"  # noqa: E501
+                )
                 registry.add_version_description(
                     model_name=args.model_name, version=model_version, description=description
                 )
 
                 # Transition to Production
-                registry.transition_model_stage(
-                    model_name=args.model_name, version=model_version, stage="Production"
-                )
+                registry.transition_model_stage(model_name=args.model_name, version=model_version, stage="Production")
 
                 logger.info(f"✅ Model registered: {args.model_name} v{model_version}")
                 logger.info(f"✅ Transitioned to Production stage")

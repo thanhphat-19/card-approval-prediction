@@ -85,18 +85,18 @@ def main():
 
         logger.info("\n📊 Training set distribution:")
         logger.info(
-            f"  Good (1): {(result['y_train'] == 1).sum():,} ({(result['y_train'] == 1).sum() / len(result['y_train']) * 100:.2f}%)"
+            f"  Good (1): {(result['y_train'] == 1).sum():,} ({(result['y_train'] == 1).sum() / len(result['y_train']) * 100:.2f}%)"  # noqa: E501
         )
         logger.info(
-            f"  Bad (0): {(result['y_train'] == 0).sum():,} ({(result['y_train'] == 0).sum() / len(result['y_train']) * 100:.2f}%)"
+            f"  Bad (0): {(result['y_train'] == 0).sum():,} ({(result['y_train'] == 0).sum() / len(result['y_train']) * 100:.2f}%)"  # noqa: E501
         )
 
         logger.info("\n📊 Test set distribution:")
         logger.info(
-            f"  Good (1): {(result['y_test'] == 1).sum():,} ({(result['y_test'] == 1).sum() / len(result['y_test']) * 100:.2f}%)"
+            f"  Good (1): {(result['y_test'] == 1).sum():,} ({(result['y_test'] == 1).sum() / len(result['y_test']) * 100:.2f}%)"  # noqa: E501
         )
         logger.info(
-            f"  Bad (0): {(result['y_test'] == 0).sum():,} ({(result['y_test'] == 0).sum() / len(result['y_test']) * 100:.2f}%)"
+            f"  Bad (0): {(result['y_test'] == 0).sum():,} ({(result['y_test'] == 0).sum() / len(result['y_test']) * 100:.2f}%)"  # noqa: E501
         )
 
         # 4. Save Processed Data

@@ -22,9 +22,7 @@ MODEL_CLASSES = {
 }
 
 
-def get_model_configs(
-    models: Optional[List[str]] = None, config_path: Optional[str] = None
-) -> Dict:
+def get_model_configs(models: Optional[List[str]] = None, config_path: Optional[str] = None) -> Dict:
     """
     Get model configurations for training from config file
 

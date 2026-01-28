@@ -20,9 +20,7 @@ from sklearn.metrics import (
 )
 
 
-def plot_confusion_matrix(
-    y_true: pd.Series, y_pred: np.ndarray, save_path: Optional[str] = None
-) -> plt.Figure:
+def plot_confusion_matrix(y_true: pd.Series, y_pred: np.ndarray, save_path: Optional[str] = None) -> plt.Figure:
     """
     Plot confusion matrix
 
@@ -59,9 +57,7 @@ def plot_confusion_matrix(
     return fig
 
 
-def plot_roc_curve(
-    y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optional[str] = None
-) -> plt.Figure:
+def plot_roc_curve(y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optional[str] = None) -> plt.Figure:
     """
     Plot ROC curve
 
@@ -131,9 +127,7 @@ def plot_precision_recall_curve(
     return fig
 
 
-def plot_threshold_analysis(
-    y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optional[str] = None
-) -> plt.Figure:
+def plot_threshold_analysis(y_true: pd.Series, y_pred_proba: np.ndarray, save_path: Optional[str] = None) -> plt.Figure:
     """
     Plot metrics vs threshold
 

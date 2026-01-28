@@ -1,8 +1,10 @@
 # =============================================================================
-# Ingress Resources for Card Approval Prediction
+# Ingress Routes for Card Approval Prediction
 # =============================================================================
-# Deploy: kubectl apply -f k8s/ingress.yaml
-# Access via: http://34.139.72.244/
+# This file contains standalone ingress resources (not managed by Helm).
+# For Helm-managed deployments, see: helm-charts/
+#
+# Deploy: kubectl apply -f manifests/ingress.yaml
 # =============================================================================
 apiVersion: networking.k8s.io/v1
 kind: Ingress

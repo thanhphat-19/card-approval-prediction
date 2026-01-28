@@ -1,38 +1,35 @@
-"""Health check API endpoints."""
-from datetime import datetime
+"""Health check API endpoints.
+"""
 
-import mlflow
+from datetime import datetime
+from typing import Dict
+
 from fastapi import APIRouter
 from loguru import logger
 
 from app.core.config import get_settings
 from app.schemas.health import HealthResponse
+from app.utils.mlflow_helpers import check_mlflow_connection
 
 router = APIRouter(prefix="/health", tags=["Health"])
 settings = get_settings()
 
 
 @router.get("", response_model=HealthResponse)
-async def health_check():
+def health_check() -> HealthResponse:
     """
-    Health check endpoint
+    Health check endpoint.
 
     Returns system health status including:
     - Application status
     - MLflow connection status
-    - Database connection status
     """
     logger.info("Health check requested")
 
     # Check MLflow connection
-    mlflow_connected = False
-    try:
-        mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
-        mlflow.search_experiments(max_results=1)
-        mlflow_connected = True
+    mlflow_connected = check_mlflow_connection(settings.MLFLOW_TRACKING_URI)
+    if mlflow_connected:
         logger.debug("MLflow connection: OK")
-    except (ConnectionError, mlflow.exceptions.MlflowException) as e:
-        logger.warning(f"MLflow connection failed: {e}")
 
     # Determine overall status
     status = "healthy" if mlflow_connected else "degraded"
@@ -46,10 +43,20 @@ async def health_check():
 
 
 @router.get("/ready")
-async def readiness_check():
+def readiness_check() -> Dict[str, str]:
     """
-    Readiness check for Kubernetes
+    Readiness check for Kubernetes.
 
-    Returns 200 if service is ready to accept traffic
+    Returns 200 if service is ready to accept traffic.
     """
     return {"status": "ready"}
+
+
+@router.get("/live")
+def liveness_check() -> Dict[str, str]:
+    """
+    Liveness check for Kubernetes.
+
+    Returns 200 if service is alive.
+    """
+    return {"status": "alive"}

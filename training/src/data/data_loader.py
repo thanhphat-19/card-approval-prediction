@@ -37,9 +37,7 @@ class DataLoader:
         credit_data = pd.read_csv(credit_path)
 
         logger.info(f"Application Records: {app_data.shape[0]:,} rows, {app_data.shape[1]} columns")
-        logger.info(
-            f"Credit Records: {credit_data.shape[0]:,} rows, {credit_data.shape[1]} columns"
-        )
+        logger.info(f"Credit Records: {credit_data.shape[0]:,} rows, {credit_data.shape[1]} columns")
         logger.info(f"Unique Applicants: {app_data['ID'].nunique():,}")
 
         return app_data, credit_data
@@ -62,9 +60,7 @@ class DataLoader:
 
         # Create Good/Bad labels from STATUS
         credit_data = credit_data.copy()
-        credit_data["Good or Bad"] = credit_data["STATUS"].apply(
-            lambda x: "Good" if x in ["0", "X", "C"] else "Bad"
-        )
+        credit_data["Good or Bad"] = credit_data["STATUS"].apply(lambda x: "Good" if x in ["0", "X", "C"] else "Bad")
 
         # Group by ID and get dominant label
         credit_goods_bads = credit_data.groupby(["ID", "Good or Bad"]).size().to_frame("size")
@@ -74,9 +70,7 @@ class DataLoader:
         max_goods_bads = credit_goods_bads.loc[idx]
 
         # Convert to binary (1=Good, 0=Bad)
-        max_goods_bads["Label"] = max_goods_bads["Good or Bad"].apply(
-            lambda x: 1 if x == "Good" else 0
-        )
+        max_goods_bads["Label"] = max_goods_bads["Good or Bad"].apply(lambda x: 1 if x == "Good" else 0)
         max_goods_bads = max_goods_bads[["ID", "Label"]].reset_index(drop=True)
 
         logger.info(f"Created target labels for {len(max_goods_bads):,} customers")

@@ -1,15 +1,17 @@
 """Model service for loading and managing ML models from MLflow."""
-import os
+
 from functools import lru_cache
 
 import mlflow
 from loguru import logger
 
 from app.core.config import get_settings
+from app.utils.gcs import setup_gcs_credentials
+from app.utils.mlflow_helpers import get_latest_model_version, load_model_with_flavor, setup_mlflow_tracking
 
 
 class ModelService:
-    """Service for loading and managing ML models from MLflow"""
+    """Service for loading and managing ML models from MLflow."""
 
     def __init__(self):
         self.settings = get_settings()
@@ -19,79 +21,51 @@ class ModelService:
         self.run_id = None
         self._load_model()
 
-    def _load_model(self):
-        """Load model from MLflow registry"""
+    def _load_model(self) -> None:
+        """Load model from MLflow registry."""
         try:
-            # Setup GCS authentication if credentials path is provided
-            if self.settings.GOOGLE_APPLICATION_CREDENTIALS:
-                if os.path.exists(self.settings.GOOGLE_APPLICATION_CREDENTIALS):
-                    creds_path = self.settings.GOOGLE_APPLICATION_CREDENTIALS
-                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
-                    logger.info(f"Using GCS credentials from: {creds_path}")
-                else:
-                    creds_path = self.settings.GOOGLE_APPLICATION_CREDENTIALS
-                    logger.warning(f"GCS credentials file not found: {creds_path}")
-            else:
-                logger.info("No GCS credentials specified - using default authentication")
-
-            mlflow.set_tracking_uri(self.settings.MLFLOW_TRACKING_URI)
-            client = mlflow.tracking.MlflowClient()
-
-            # Use search_model_versions instead of deprecated get_latest_versions
-            filter_string = f"name='{self.settings.MODEL_NAME}'"
-            model_versions = client.search_model_versions(filter_string=filter_string)
-
-            # Filter by stage and get the latest
-            stage_versions = [v for v in model_versions if v.current_stage == self.settings.MODEL_STAGE]  # noqa: E501
-
-            if not stage_versions:
-                raise ValueError(
-                    f"No model version found for {self.settings.MODEL_NAME} "
-                    f"in {self.settings.MODEL_STAGE} stage"  # noqa: E501
-                )
-
-            # Sort by version number (descending) and get the latest
-            latest_version = sorted(stage_versions, key=lambda v: int(v.version), reverse=True)[0]
-            self.version = latest_version.version
-            self.run_id = latest_version.run_id
-
-            model_uri = f"models:/{self.settings.MODEL_NAME}/{self.version}"
-            logger.info(f"Loading model from: {model_uri} (stage: {self.settings.MODEL_STAGE})")
-            logger.info(f"Model run ID: {self.run_id}")
-
-            self.model = mlflow.pyfunc.load_model(model_uri)
-
-            # Try loading native model for predict_proba support
-            # Models are logged with specific flavors (xgboost, lightgbm, catboost, sklearn)
-            self.sklearn_model = self._try_load_native_model(model_uri)
-            if self.sklearn_model is not None:
-                logger.info(
-                    f"✓ Model loaded with predict_proba support: {self.settings.MODEL_NAME} v{self.version}"
-                )  # noqa: E501
-            else:
-                logger.info(f"✓ Model loaded (pyfunc only): {self.settings.MODEL_NAME} v{self.version}")  # noqa: E501
-
+            self._setup_credentials()
+            self._fetch_model_version()
+            self._load_model_artifacts()
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             raise RuntimeError(f"Model loading failed: {e}") from e
 
-    def _try_load_native_model(self, model_uri: str):
-        """Try loading model with different MLflow flavors for predict_proba support"""
-        loaders = [
-            ("xgboost", lambda: mlflow.xgboost.load_model(model_uri)),
-            ("lightgbm", lambda: mlflow.lightgbm.load_model(model_uri)),
-            ("catboost", lambda: mlflow.catboost.load_model(model_uri)),
-            ("sklearn", lambda: mlflow.sklearn.load_model(model_uri)),
-        ]
-        for flavor, loader in loaders:
-            try:
-                model = loader()
-                logger.debug(f"Loaded model with {flavor} flavor")
-                return model
-            except Exception:  # noqa: S110
-                continue
-        logger.warning("Could not load native model for predict_proba - probabilities will be unavailable")
-        return None
+    def _setup_credentials(self) -> None:
+        """Setup GCS credentials for MLflow artifact access."""
+        setup_gcs_credentials(self.settings.GOOGLE_APPLICATION_CREDENTIALS)
+
+    def _fetch_model_version(self) -> None:
+        """Fetch the latest model version from MLflow registry."""
+        client = setup_mlflow_tracking(self.settings.MLFLOW_TRACKING_URI)
+
+        self.version, self.run_id = get_latest_model_version(
+            client=client,
+            model_name=self.settings.MODEL_NAME,
+            stage=self.settings.MODEL_STAGE,
+        )
+
+    def _load_model_artifacts(self) -> None:
+        """Load model artifacts (pyfunc and native model for predict_proba)."""
+        model_uri = f"models:/{self.settings.MODEL_NAME}/{self.version}"
+        logger.info(f"Loading model from: {model_uri} (stage: {self.settings.MODEL_STAGE})")
+        logger.info(f"Model run ID: {self.run_id}")
+
+        # Load pyfunc model
+        self.model = mlflow.pyfunc.load_model(model_uri)
+
+        # Try loading native model for predict_proba support
+        self.sklearn_model = load_model_with_flavor(model_uri)
+
+        self._log_model_load_status()
+
+    def _log_model_load_status(self) -> None:
+        """Log the model load status."""
+        model_info = f"{self.settings.MODEL_NAME} v{self.version}"
+        if self.sklearn_model is not None:
+            logger.info(f"✓ Model loaded with predict_proba support: {model_info}")
+        else:
+            logger.info(f"✓ Model loaded (pyfunc only): {model_info}")
 
     def predict(self, features):
         """Make prediction with loaded model"""

@@ -69,29 +69,32 @@ card-approval-prediction/
 │   ├── core/                   # Config, logging, metrics
 │   ├── routers/                # API routes (health, predict)
 │   ├── schemas/                # Pydantic models (request/response)
-│   └── services/               # Business logic (model, preprocessing)
+│   ├── services/               # Business logic (model, preprocessing)
+│   └── utils/                  # Reusable utilities (GCS, MLflow helpers)
 │
-├── cap_model/                  # ML training pipeline
-│   ├── data/                   # Raw and processed datasets
+├── data/                       # Data storage (raw and processed)
+│   ├── raw/                    # Raw application and credit records
+│   └── processed/              # Processed data + preprocessing artifacts
+│
+├── models/                     # Trained model artifacts
+│   └── evaluation/             # Evaluation plots and reports
+│
+├── training/                   # ML training pipeline
 │   ├── notebooks/              # EDA and experimentation
 │   ├── scripts/                # Training automation scripts
-│   ├── src/                    # Training source code
-│   │   ├── data/               # Data loading
-│   │   ├── features/           # Feature engineering
-│   │   ├── models/             # Model training & evaluation
-│   │   └── utils/              # Utilities
-│   └── models/                 # Saved model artifacts
+│   └── src/                    # Training source code
+│       ├── data/               # Data loading
+│       ├── features/           # Feature engineering
+│       ├── models/             # Model training & evaluation
+│       └── utils/              # Training utilities
 │
-├── helm-charts/                # Kubernetes deployments
+├── helm-charts/                # Helm chart deployments
 │   ├── card-approval/          # API stack (API + Postgres + Redis)
 │   ├── card-approval-training/ # MLflow + Postgres for training
 │   └── infrastructure/         # Shared components
-│       ├── card-approval-api/
-│       ├── card-approval-monitoring/
-│       ├── mlflow/
-│       ├── postgres/
-│       ├── redis/
-│       └── nginx-ingress/
+│
+├── manifests/                  # Raw Kubernetes manifests
+│   └── ingress.yaml            # Ingress routes (API, Grafana, MLflow)
 │
 ├── terraform/                  # GCP infrastructure as code
 │   ├── main.tf                 # GKE, GCS, Artifact Registry, IAM
@@ -105,6 +108,9 @@ card-approval-prediction/
 │   ├── test_api.py
 │   ├── test_health.py
 │   └── test_predict.py
+│
+├── scripts/                    # CI/CD utility scripts
+│   └── evaluate_model.py       # Model quality gate for deployments
 │
 ├── docs/                       # Documentation (MkDocs)
 │   ├── 00_Setup_Guide.md       # Getting started
@@ -121,7 +127,6 @@ card-approval-prediction/
 ├── pyproject.toml              # Python project configuration
 ├── requirements.txt            # Python dependencies
 ├── mkdocs.yml                  # Documentation configuration
-├── config.example.env          # Configuration template
 └── sonar-project.properties    # SonarQube configuration
 ```
 
@@ -144,14 +149,12 @@ card-approval-prediction/
 git clone https://github.com/yourusername/card-approval-prediction.git
 cd card-approval-prediction
 
-# Configure environment
-cp config.example.env config.env
-# Edit config.env with your GCP project ID and passwords
-
 # Configure Terraform
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 # Edit terraform.tfvars with your project settings
 ```
+
+> 📖 **Configuration Reference**: See [docs/08_Configuration.md](docs/08_Configuration.md) for all configuration options.
 
 > 📖 **Full setup guide**: See [docs/00_Setup_Guide.md](docs/00_Setup_Guide.md)
 
@@ -274,4 +277,4 @@ If you use Card Approval Prediction in your research, please cite it as follows:
 
 ## Contact
 
-For questions, issues, or collaborations, please open an issue orcontact thanhphat19@gmail.com
+For questions, issues, or collaborations, please open an issue orcontact thanhphat352@gmail.com

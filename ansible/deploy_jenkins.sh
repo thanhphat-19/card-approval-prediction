@@ -22,10 +22,10 @@ if ! gcloud config get-value project &> /dev/null; then
     echo "gcloud config set project product-recsys-mlops"
     exit 1
 fi
-
+F
 # Run the main playbook
 echo "Starting deployment..."
-ansible-playbook site.yml -v
+ansible-playbook deploy_jenkins.yml -v
 
 echo ""
 echo "=================================================="

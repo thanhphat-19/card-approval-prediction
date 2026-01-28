@@ -2,45 +2,51 @@
 
 This folder contains the ML model training pipeline for credit card approval prediction.
 
-## 📁 Structure
+## 📁 Project Structure
 
 ```
-cap_model/
-├── data/               # Data storage
-│   ├── raw/           # Raw application and credit records
-│   └── processed/     # Processed data + preprocessing artifacts
-├── notebooks/         # Jupyter notebooks for experimentation
-├── scripts/           # Training automation scripts
-├── src/               # Source code modules
-│   ├── data/         # Data loading
-│   ├── features/     # Feature engineering
-│   ├── models/       # Model training
-│   └── utils/        # Utility functions
-└── models/           # Trained model artifacts
+card-approval-prediction/
+├── data/                   # Data storage (at project root)
+│   ├── raw/               # Raw application and credit records
+│   └── processed/         # Processed data + preprocessing artifacts
+├── models/                 # Trained model artifacts (at project root)
+│   └── evaluation/        # Evaluation plots and reports
+├── training/              # Training pipeline (this folder)
+│   ├── notebooks/         # Jupyter notebooks for experimentation
+│   ├── scripts/           # Training automation scripts
+│   └── src/               # Source code modules
+│       ├── data/         # Data loading
+│       ├── features/     # Feature engineering
+│       ├── models/       # Model training
+│       └── utils/        # Utility functions
+└── app/                   # FastAPI application
 ```
 
 ## 🚀 Quick Start
 
-### 1. **Create Kaggle Confidential**
+**All scripts should be run from the project root directory.**
+
+### 1. **Setup Kaggle Credentials**
 
 ```bash
-mkdir ~/.kaggle
-chmod 600 ~/.kaggle
+mkdir -p ~/.kaggle
+# Copy your kaggle.json to ~/.kaggle/
+chmod 600 ~/.kaggle/kaggle.json
 ```
 
 ### 2. **Download Data**
 ```bash
-cd cap_model
-python scripts/download_data.py
+# From project root
+python training/scripts/download_data.py
 ```
 
-### 2. **Run Data Preprocessing**
+### 3. **Run Data Preprocessing**
 ```bash
-# Basic preprocessing
-python scripts/run_preprocessing.py
+# Basic preprocessing (from project root)
+python training/scripts/run_preprocessing.py
 
 # Custom settings
-python scripts/run_preprocessing.py \
+python training/scripts/run_preprocessing.py \
   --raw-data-dir data/raw \
   --output-dir data/processed \
   --test-size 0.2 \
@@ -56,16 +62,16 @@ python scripts/run_preprocessing.py \
 - `data/processed/pca.pkl`
 - `data/processed/feature_names.json`
 
-### 3. **Train Models**
+### 4. **Train Models**
 ```bash
-# Train all models with auto-registration
-python scripts/run_training.py
+# Train all models with auto-registration (from project root)
+python training/scripts/run_training.py
 
 # Train specific model
-python scripts/run_training.py --models XGBoost
+python training/scripts/run_training.py --models XGBoost
 
 # Train without auto-registration
-python scripts/run_training.py --no-auto-register
+python training/scripts/run_training.py --no-auto-register
 ```
 
 **Options:**
@@ -82,7 +88,7 @@ python scripts/run_training.py --no-auto-register
 - Evaluation plots in `models/evaluation/`
 - Model registered to MLflow Production
 
-### 4. **View MLflow UI**
+### 5. **View MLflow UI**
 ```bash
 mlflow ui --host 0.0.0.0 --port 5000
 # Open: http://localhost:5000
@@ -93,16 +99,14 @@ mlflow ui --host 0.0.0.0 --port 5000
 Run the entire pipeline from scratch:
 
 ```bash
-cd cap_model
-
 # Step 1: Download data
-python scripts/download_data.py
+python training/scripts/download_data.py
 
 # Step 2: Preprocess
-python scripts/run_preprocessing.py
+python training/scripts/run_preprocessing.py
 
 # Step 3: Train and register best model
-python scripts/run_training.py
+python training/scripts/run_training.py
 
 # Step 4: Verify in MLflow
 mlflow ui
@@ -113,21 +117,21 @@ mlflow ui
 Run EDA to understand the data:
 
 ```bash
-python scripts/run_eda.py
+python training/scripts/run_eda.py
 ```
 
 ## 📝 Key Files
 
 | File | Description |
 |------|-------------|
-| `scripts/run_preprocessing.py` | Data preprocessing pipeline |
-| `scripts/run_training.py` | Model training with MLflow |
-| `src/data/data_loader.py` | Data loading utilities |
-| `src/features/feature_engineering.py` | Feature engineering |
-| `src/models/train.py` | Model training logic |
-| `notebooks/01_eda.ipynb` | Exploratory analysis |
-| `notebooks/02_data_processing.ipynb` | Data preparation |
-| `notebooks/03_model_training.ipynb` | Model experiments |
+| `training/scripts/run_preprocessing.py` | Data preprocessing pipeline |
+| `training/scripts/run_training.py` | Model training with MLflow |
+| `training/src/data/data_loader.py` | Data loading utilities |
+| `training/src/features/feature_engineering.py` | Feature engineering |
+| `training/src/models/train.py` | Model training logic |
+| `training/notebooks/01_eda.ipynb` | Exploratory analysis |
+| `training/notebooks/02_data_processing.ipynb` | Data preparation |
+| `training/notebooks/03_model_training.ipynb` | Model experiments |
 
 ## 🎯 Model Performance
 

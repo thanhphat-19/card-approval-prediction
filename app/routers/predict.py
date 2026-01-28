@@ -1,4 +1,12 @@
-"""Prediction API endpoints."""
+"""Prediction API endpoints.
+
+Note: These endpoints use synchronous functions because the underlying
+operations (MLflow, pandas, model inference) are blocking I/O.
+FastAPI will automatically run sync endpoints in a thread pool.
+"""
+
+from typing import Dict
+
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
@@ -11,43 +19,30 @@ router = APIRouter(prefix="/api/v1", tags=["Predictions"])
 
 
 @router.post("/predict", response_model=PredictionOutput)
-async def predict(
+def predict(
     input_data: PredictionInput,
     model_service: ModelService = Depends(get_model_service),
-):
-    """Make credit card approval prediction"""
+) -> PredictionOutput:
+    """Make credit card approval prediction."""
     try:
         logger.info(f"Prediction request received for customer ID: {input_data.ID}")
 
-        # Preprocess
-        preprocessing_service = get_preprocessing_service(run_id=model_service.run_id)
-        df = pd.DataFrame([input_data.model_dump()])
-        df_processed = preprocessing_service.preprocess(df)
+        # Preprocess input data
+        df_processed = _preprocess_input(input_data, model_service.run_id)
 
-        # Predict
-        prediction_result = model_service.predict(df_processed)
-        prediction = int(prediction_result[0])
+        # Make prediction
+        prediction = _get_prediction(model_service, df_processed)
 
-        # Get probability if available
-        proba_result = model_service.predict_proba(df_processed)
-        if proba_result is not None:
-            # proba_result shape: (n_samples, n_classes) -> [[prob_class_0, prob_class_1]]
-            prob_approved = float(proba_result[0][1])  # Probability of class 1 (Approved)
-            confidence = float(max(proba_result[0]))  # Confidence = max probability
-        else:
-            # Fallback if predict_proba not available
-            prob_approved = float(prediction)
-            confidence = 1.0
+        # Get probabilities
+        prob_approved, confidence = _get_probabilities(model_service, df_processed, prediction)
 
-        # Format response
-        # Label mapping from training:
-        # Label 1 = Good credit (STATUS 0,C,X) → APPROVED
-        # Label 0 = Bad credit (STATUS 1-5) → REJECTED
+        # Build response
         decision = "APPROVED" if prediction == 1 else "REJECTED"
 
         logger.info(
             f"Prediction completed: customer_id={input_data.ID}, "
-            f"decision={decision}, probability={prob_approved:.3f}, income={input_data.AMT_INCOME_TOTAL}"  # noqa: E501
+            f"decision={decision}, probability={prob_approved:.3f}, "
+            f"income={input_data.AMT_INCOME_TOTAL}"
         )
 
         return PredictionOutput(
@@ -63,12 +58,52 @@ async def predict(
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}") from e
 
 
-@router.post("/reload-model")
-async def reload_model(model_service: ModelService = Depends(get_model_service)):
-    """
-    Reload model from MLflow registry
+def _preprocess_input(input_data: PredictionInput, run_id: str) -> pd.DataFrame:
+    """Preprocess input data for model inference."""
+    preprocessing_service = get_preprocessing_service(run_id=run_id)
+    df = pd.DataFrame([input_data.model_dump()])
+    return preprocessing_service.preprocess(df)
 
-    Useful after training a new model version
+
+def _get_prediction(model_service: ModelService, df_processed: pd.DataFrame) -> int:
+    """Get model prediction."""
+    prediction_result = model_service.predict(df_processed)
+    return int(prediction_result[0])
+
+
+def _get_probabilities(
+    model_service: ModelService,
+    df_processed: pd.DataFrame,
+    prediction: int,
+) -> tuple[float, float]:
+    """
+    Get prediction probabilities.
+
+    Returns:
+        Tuple of (probability_approved, confidence).
+    """
+    proba_result = model_service.predict_proba(df_processed)
+
+    if proba_result is not None:
+        # proba_result shape: (n_samples, n_classes) -> [[prob_class_0, prob_class_1]]
+        prob_approved = float(proba_result[0][1])  # Probability of class 1 (Approved)
+        confidence = float(max(proba_result[0]))  # Confidence = max probability
+    else:
+        # Fallback if predict_proba not available
+        prob_approved = float(prediction)
+        confidence = 1.0
+
+    return prob_approved, confidence
+
+
+@router.post("/reload-model")
+def reload_model(
+    model_service: ModelService = Depends(get_model_service),
+) -> Dict[str, object]:
+    """
+    Reload model from MLflow registry.
+
+    Useful after training a new model version.
     """
     try:
         logger.info("Model reload requested")
@@ -86,6 +121,8 @@ async def reload_model(model_service: ModelService = Depends(get_model_service))
 
 
 @router.get("/model-info")
-async def get_model_info(model_service: ModelService = Depends(get_model_service)):
-    """Get current model information"""
+def get_model_info(
+    model_service: ModelService = Depends(get_model_service),
+) -> Dict[str, object]:
+    """Get current model information."""
     return model_service.get_model_info()

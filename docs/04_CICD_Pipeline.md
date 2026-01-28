@@ -1,9 +1,9 @@
 # CI/CD Pipeline Guide
 
-Jenkins pipeline for automated testing, building, and deployment.
+Jenkins pipeline for automated testing, building, and deployment with model quality gates.
 
 ```
-Code Push → Jenkins → Lint → Build → Scan → Push → Deploy
+Code Push → Jenkins → Lint → SonarQube → Model Evaluation → Build → Scan → Push → Deploy
 ```
 
 ---
@@ -137,14 +137,30 @@ Click **Test connection** to verify.
 
 ## Pipeline Flow
 
-| Stage | PR Branch | Main Branch |
-|-------|-----------|-------------|
-| Checkout | ✅ | ✅ |
-| Linting | ✅ | ✅ |
-| Build Image | ❌ | ✅ |
-| Security Scan | ❌ | ✅ |
-| Push Image | ❌ | ✅ |
-| Deploy | ❌ | ✅ |
+| Stage | PR Branch | Main Branch | Description |
+|-------|-----------|-------------|-------------|
+| Checkout | ✅ | ✅ | Clone repository |
+| Linting | ✅ | ✅ | Flake8, Pylint, Black, Isort |
+| SonarQube | ✅ | ✅ | Code quality analysis |
+| Model Evaluation | ❌ | ✅ | Evaluate MLflow model (F1 ≥ 0.90) |
+| Build Image | ❌ | ✅ | Build Docker image |
+| Security Scan | ❌ | ✅ | Trivy vulnerability scan |
+| Push Image | ❌ | ✅ | Push to Artifact Registry |
+| Deploy | ❌ | ✅ | Helm upgrade to GKE |
+
+### Model Quality Gate
+
+The pipeline includes a **Model Evaluation** stage that:
+1. Loads the latest Production model from MLflow
+2. Evaluates against test data (`data/processed/`)
+3. Checks if F1 score meets threshold (default: 0.90)
+4. **Fails the build** if model doesn't meet quality requirements
+
+```bash
+# Run evaluation locally
+export MLFLOW_TRACKING_URI=http://<MLFLOW_IP>/mlflow
+python scripts/evaluate_model.py --threshold 0.90
+```
 
 ---
 
