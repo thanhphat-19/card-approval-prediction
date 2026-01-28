@@ -119,14 +119,14 @@ def main():
             logger.info("  - pca.pkl")
 
         logger.info("\n" + "=" * 80)
-        logger.info("✅ PREPROCESSING COMPLETED SUCCESSFULLY")
+        logger.info("  PREPROCESSING COMPLETED SUCCESSFULLY")
         logger.info("=" * 80)
         logger.info(f"Results saved to: {args.output_dir}")
 
         return 0
 
     except Exception as e:
-        logger.error(f"❌ Preprocessing failed: {e}", exc_info=True)
+        logger.error(f" Preprocessing failed: {e}", exc_info=True)
         return 1
 
 

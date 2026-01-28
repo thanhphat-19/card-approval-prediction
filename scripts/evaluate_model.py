@@ -162,12 +162,18 @@ def main():
         default=os.environ.get("MODEL_STAGE", "Production"),
         help="Model stage to evaluate (default: Production)",
     )
+    parser.add_argument(
+        "--output-file",
+        type=str,
+        default=None,
+        help="Output file to write model version info for CI/CD pipeline",
+    )
 
     args = parser.parse_args()
 
     # Validate
     if not args.tracking_uri:
-        print("❌ ERROR: MLFLOW_TRACKING_URI not set")
+        print(" ERROR: MLFLOW_TRACKING_URI not set")
         sys.exit(1)
 
     print("=" * 60)
@@ -198,7 +204,7 @@ def main():
         print("📊 EVALUATION RESULTS")
         print("=" * 60)
         for metric_name, value in metrics.items():
-            status = "✅" if metric_name == "f1_score" and value >= args.threshold else "  "
+            status = " " if metric_name == "f1_score" and value >= args.threshold else "  "
             print(f"   {status} {metric_name}: {value:.4f}")
 
         # Quality gate check
@@ -206,18 +212,29 @@ def main():
         print("\n" + "=" * 60)
 
         if f1 >= args.threshold:
-            print(f"✅ PASSED: F1 score ({f1:.4f}) >= threshold ({args.threshold})")
+            print(f"  PASSED: F1 score ({f1:.4f}) >= threshold ({args.threshold})")
             print("   Model is ready for deployment!")
             print("=" * 60)
+
+            # Output model version for CI/CD pipeline to use
+            output_file = Path(args.output_file) if args.output_file else None
+            if output_file:
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_file, "w") as f:
+                    f.write(f"MODEL_VERSION={version}\n")
+                    f.write(f"MODEL_RUN_ID={run_id}\n")
+                    f.write(f"MODEL_F1_SCORE={f1:.4f}\n")
+                print(f"📝 Model info written to: {output_file}")
+
             sys.exit(0)
         else:
-            print(f"❌ FAILED: F1 score ({f1:.4f}) < threshold ({args.threshold})")
+            print(f" FAILED: F1 score ({f1:.4f}) < threshold ({args.threshold})")
             print("   Model does not meet quality requirements!")
             print("=" * 60)
             sys.exit(1)
 
     except Exception as e:
-        print(f"\n❌ ERROR: {e}")
+        print(f"\n ERROR: {e}")
         sys.exit(1)
 
 

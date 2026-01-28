@@ -14,7 +14,7 @@ End-to-end **MLOps pipeline** for credit card approval prediction using machine 
   - [Overview](#overview)
   - [🛠️ Tech Stack](#️-tech-stack)
   - [📁 Project Structure](#-project-structure)
-  - [🚀 Quick Start](#-quick-start)
+  - [  Quick Start](#-quick-start)
     - [Prerequisites](#prerequisites)
     - [Clone \& Configure](#clone--configure)
   - [📡 API Endpoints](#-api-endpoints)
@@ -132,7 +132,7 @@ card-approval-prediction/
 
 ---
 
-## 🚀 Quick Start
+##   Quick Start
 
 ### Prerequisites
 

@@ -356,7 +356,7 @@ Saved Artifacts:
   - Comparison results: {output_path / 'model_comparison.csv'}
   - All models logged to MLflow
 
-✅ Ready for model evaluation!
+  Ready for model evaluation!
 """
 
         # Save summary

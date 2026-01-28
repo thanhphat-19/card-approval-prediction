@@ -139,14 +139,14 @@ Click **Test connection** to verify.
 
 | Stage | PR Branch | Main Branch | Description |
 |-------|-----------|-------------|-------------|
-| Checkout | ✅ | ✅ | Clone repository |
-| Linting | ✅ | ✅ | Flake8, Pylint, Black, Isort |
-| SonarQube | ✅ | ✅ | Code quality analysis |
-| Model Evaluation | ❌ | ✅ | Evaluate MLflow model (F1 ≥ 0.90) |
-| Build Image | ❌ | ✅ | Build Docker image |
-| Security Scan | ❌ | ✅ | Trivy vulnerability scan |
-| Push Image | ❌ | ✅ | Push to Artifact Registry |
-| Deploy | ❌ | ✅ | Helm upgrade to GKE |
+| Checkout |   |   | Clone repository |
+| Linting |   |   | Flake8, Pylint, Black, Isort |
+| SonarQube |   |   | Code quality analysis |
+| Model Evaluation |  |   | Evaluate MLflow model (F1 ≥ 0.90) |
+| Build Image |  |   | Build Docker image |
+| Security Scan |  |   | Trivy vulnerability scan |
+| Push Image |  |   | Push to Artifact Registry |
+| Deploy |  |   | Helm upgrade to GKE |
 
 ### Model Quality Gate
 

@@ -68,7 +68,7 @@ pipeline {
         stage('Check Branch') {
             steps {
                 script {
-                    echo "✅ Building branch: ${env.BRANCH_NAME}"
+                    echo "  Building branch: ${env.BRANCH_NAME}"
 
                     // Determine if this is main branch or a PR branch
                     def isMainBranch = env.BRANCH_NAME in ['main', 'master', 'develop']
@@ -154,7 +154,7 @@ pipeline {
                 sh '''
                 echo "🔍 Evaluating production model quality..."
 
-                # Run model evaluation against MLflow
+                # Run model evaluation against MLflow and output model version
                 tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
                 docker run --rm -i \
                   --network host \
@@ -169,9 +169,30 @@ pipeline {
                     pip install --quiet mlflow pandas scikit-learn loguru &&
                     python scripts/evaluate_model.py \
                       --threshold ${F1_THRESHOLD} \
-                      --data-dir data/processed
-                  "
+                      --data-dir data/processed \
+                      --output-file /workspace/.model-info.env &&
+                    cat /workspace/.model-info.env
+                  " > .model-info.env
+
+                # Display model info
+                echo "Model info:"
+                cat .model-info.env
                 '''
+
+                // Read model version into environment variable
+                script {
+                    if (fileExists('.model-info.env')) {
+                        def modelInfo = readFile('.model-info.env').trim()
+                        modelInfo.split('\n').each { line ->
+                            def parts = line.split('=')
+                            if (parts.size() == 2) {
+                                env."${parts[0]}" = parts[1]
+                            }
+                        }
+                        echo "Model Version: ${env.MODEL_VERSION}"
+                        echo "Model Run ID: ${env.MODEL_RUN_ID}"
+                    }
+                }
             }
         }
 
@@ -236,14 +257,19 @@ pipeline {
             when { branch 'main' }
             steps {
                 withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
-                    sh '''
+                    sh """
                     # Bundle GCP key and helm charts, then pipe into container
                     mkdir -p .tmp-deploy
-                    cp "$GCP_KEY" .tmp-deploy/gcp-key.json
+                    cp "\$GCP_KEY" .tmp-deploy/gcp-key.json
                     cp -r helm-charts .tmp-deploy/
+
+                    # Get model version (default to 'latest' if not set)
+                    MODEL_VER=\${MODEL_VERSION:-latest}
+                    echo " Deploying with model version: \$MODEL_VER"
 
                     tar cf - -C .tmp-deploy . | docker run --rm -i \
                       -e USE_GKE_GCLOUD_AUTH_PLUGIN=True \
+                      -e MODEL_VERSION=\$MODEL_VER \
                       google/cloud-sdk:latest \
                       bash -c "
                         mkdir -p /deploy && cd /deploy && tar xf - &&
@@ -260,13 +286,19 @@ pipeline {
                           --reuse-values \
                           --set api.image.repository=${REGISTRY}/${REPOSITORY}/${IMAGE_NAME} \
                           --set api.image.tag=${IMAGE_TAG} \
+                          --set api.config.modelVersion=\\\$MODEL_VERSION \
                           --timeout 10m \
                           --wait \
-                          --atomic
+                          --atomic &&
+
+                        # Force rolling restart to ensure pods load the latest model
+                        echo 'Triggering rolling restart to load new model...' &&
+                        kubectl rollout restart deployment/card-approval-api -n ${GKE_NAMESPACE} &&
+                        kubectl rollout status deployment/card-approval-api -n ${GKE_NAMESPACE} --timeout=5m
                       "
 
                     rm -rf .tmp-deploy
-                    '''
+                    """
                 }
             }
         }
@@ -275,20 +307,21 @@ pipeline {
     post {
         always {
             // Always clean up secrets and temp files
-            sh 'rm -rf .tmp-deploy || true'
+            sh 'rm -rf .tmp-deploy .model-info.env || true'
             // Clean up dangling Docker images to save disk space
             sh 'docker image prune -f || true'
         }
         success {
-            echo '✅ Pipeline completed successfully'
+            echo 'Pipeline completed successfully'
             script {
                 if (env.BRANCH_NAME == 'main') {
-                    echo "🚀 Deployed image: ${env.REGISTRY}/${env.REPOSITORY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    echo "  Deployed image: ${env.REGISTRY}/${env.REPOSITORY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    echo " Model version: ${env.MODEL_VERSION ?: 'latest'}"
                 }
             }
         }
         failure {
-            echo '❌ Pipeline failed'
+            echo ' Pipeline failed'
             echo "Branch: ${env.BRANCH_NAME}, Commit: ${env.GIT_COMMIT?.take(7) ?: 'unknown'}"
         }
     }

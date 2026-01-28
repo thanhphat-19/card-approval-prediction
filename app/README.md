@@ -21,7 +21,7 @@ app/
 └── main.py           # FastAPI application
 ```
 
-## 🚀 Quick Start
+##   Quick Start
 
 ### 1. **Start the API**
 

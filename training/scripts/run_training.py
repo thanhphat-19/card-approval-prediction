@@ -120,7 +120,7 @@ def main():
                 # Validate that these are NOT PCA features
                 if feature_names and all(name.startswith("PC") for name in feature_names[:5]):
                     logger.error(
-                        "❌ feature_names.json contains PCA features (PC1, PC2, etc.) instead of one-hot encoded features!"  # noqa: E501
+                        " feature_names.json contains PCA features (PC1, PC2, etc.) instead of one-hot encoded features!"  # noqa: E501
                     )
                     logger.error(
                         "This will cause preprocessing to fail. Please re-run data preparation with save_preprocessors=True"  # noqa: E501
@@ -129,7 +129,7 @@ def main():
                         "Invalid feature_names.json - contains PCA features instead of one-hot encoded features"  # noqa: E501
                     )
             else:
-                logger.error(f"❌ Feature names not found at {features_path}")
+                logger.error(f" Feature names not found at {features_path}")
                 logger.error(
                     "Cannot proceed without feature names for proper feature alignment during inference"  # noqa: E501
                 )
@@ -232,7 +232,7 @@ def main():
         logger.info(f"Metric ({args.metric}): {trainer.best_score}")
 
         logger.info("\n" + "=" * 80)
-        logger.info("✅ TRAINING & EVALUATION COMPLETED SUCCESSFULLY")
+        logger.info("  TRAINING & EVALUATION COMPLETED SUCCESSFULLY")
         logger.info("=" * 80)
         logger.info(f"Results saved to: {args.output_dir}")
         logger.info(f"Evaluation plots: {eval_dir}")
@@ -241,7 +241,7 @@ def main():
         # Auto-register best model to Production
         if args.auto_register:
             logger.info("\n" + "=" * 80)
-            logger.info("🚀 AUTO-REGISTERING BEST MODEL TO PRODUCTION")
+            logger.info("  AUTO-REGISTERING BEST MODEL TO PRODUCTION")
             logger.info("=" * 80)
 
             try:
@@ -268,8 +268,8 @@ def main():
                 # Transition to Production
                 registry.transition_model_stage(model_name=args.model_name, version=model_version, stage="Production")
 
-                logger.info(f"✅ Model registered: {args.model_name} v{model_version}")
-                logger.info(f"✅ Transitioned to Production stage")
+                logger.info(f"  Model registered: {args.model_name} v{model_version}")
+                logger.info(f"  Transitioned to Production stage")
                 logger.info(f"🎯 Run ID: {best_run_id}")
 
             except Exception as e:
@@ -282,7 +282,7 @@ def main():
         return 0
 
     except Exception as e:
-        logger.error(f"❌ Training failed: {e}", exc_info=True)
+        logger.error(f" Training failed: {e}", exc_info=True)
         return 1
 
 

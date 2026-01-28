@@ -303,7 +303,7 @@ data:
         {
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 38 },
           "id": 40,
-          "title": "🤖 Prediction Logs",
+          "title": " Prediction Logs",
           "type": "row",
           "collapsed": true,
           "panels": [

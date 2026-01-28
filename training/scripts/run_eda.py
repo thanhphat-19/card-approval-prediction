@@ -105,14 +105,14 @@ def main():
         logger.info(f"✓ Summary saved to {summary_path}")
 
         logger.info("\n" + "=" * 80)
-        logger.info("✅ EDA COMPLETED SUCCESSFULLY")
+        logger.info("  EDA COMPLETED SUCCESSFULLY")
         logger.info("=" * 80)
         logger.info(f"Results saved to: {args.output_dir}")
 
         return 0
 
     except Exception as e:
-        logger.error(f"❌ EDA failed: {e}", exc_info=True)
+        logger.error(f" EDA failed: {e}", exc_info=True)
         return 1
 
 

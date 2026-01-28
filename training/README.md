@@ -22,7 +22,7 @@ card-approval-prediction/
 └── app/                   # FastAPI application
 ```
 
-## 🚀 Quick Start
+##   Quick Start
 
 **All scripts should be run from the project root directory.**
 

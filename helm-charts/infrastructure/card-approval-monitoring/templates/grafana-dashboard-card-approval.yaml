@@ -162,7 +162,7 @@ data:
         {
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
           "id": 10,
-          "title": "🤖 ML Predictions",
+          "title": " ML Predictions",
           "type": "row"
         },
         {

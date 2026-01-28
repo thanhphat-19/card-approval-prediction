@@ -20,9 +20,9 @@ settings = get_settings()
 async def lifespan(_app: FastAPI):
     """Lifespan events for startup and shutdown"""
     # Startup
-    logger.info(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
+    logger.info(f"  Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"📊 MLflow URI: {settings.MLFLOW_TRACKING_URI}")
-    logger.info(f"🤖 Model: {settings.MODEL_NAME} ({settings.MODEL_STAGE})")
+    logger.info(f" Model: {settings.MODEL_NAME} ({settings.MODEL_STAGE})")
 
     yield
 
