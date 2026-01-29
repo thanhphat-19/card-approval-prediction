@@ -38,7 +38,7 @@ pipeline {
         F1_THRESHOLD        = '0.90'
 
         // SonarQube Configuration
-        SONAR_HOST_URL = 'http://sonarqube:9000'
+        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     stages {
