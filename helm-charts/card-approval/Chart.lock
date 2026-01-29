@@ -1,0 +1,12 @@
+dependencies:
+- name: postgres
+  repository: file://../infrastructure/postgres
+  version: 0.1.0
+- name: redis
+  repository: file://../infrastructure/redis
+  version: 0.1.0
+- name: api
+  repository: file://../infrastructure/card-approval-api
+  version: 0.1.0
+digest: sha256:fd699d00d46ba5c9c67c074b4e05d73e951a91f9cab0269e7d6082b28658b62f
+generated: "2026-01-24T14:31:04.721029514+07:00"
