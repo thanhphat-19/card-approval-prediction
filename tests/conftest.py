@@ -44,12 +44,12 @@ def client(mock_model, mock_preprocessing_service):
 
     # Patch all external dependencies
     with patch("app.services.model_service.mlflow") as mock_mlflow, patch(
-        "app.services.preprocessing_service.mlflow"
-    ) as mock_preproc_mlflow, patch(
+        "app.utils.mlflow_helpers.mlflow"
+    ) as mock_utils_mlflow, patch("app.services.preprocessing_service.mlflow") as mock_preproc_mlflow, patch(
         "app.services.preprocessing_service.joblib"
     ) as mock_joblib, patch(
-        "app.routers.health.mlflow"
-    ) as mock_health_mlflow:
+        "app.utils.mlflow_helpers.check_mlflow_connection"
+    ) as mock_check_mlflow:
         # Mock MLflow client for model service
         mock_client = MagicMock()
         mock_version = MagicMock()
@@ -57,7 +57,7 @@ def client(mock_model, mock_preprocessing_service):
         mock_version.run_id = "test-run-id"
         mock_version.current_stage = "Production"
         mock_client.search_model_versions.return_value = [mock_version]
-        mock_mlflow.tracking.MlflowClient.return_value = mock_client
+        mock_utils_mlflow.tracking.MlflowClient.return_value = mock_client
         mock_mlflow.pyfunc.load_model.return_value = mock_model
 
         # Mock preprocessing service artifacts loading
@@ -68,8 +68,8 @@ def client(mock_model, mock_preprocessing_service):
         mock_pca.transform.return_value = np.array([[0.5, -0.3, 0.1]])
         mock_joblib.load.side_effect = [mock_scaler, mock_pca]
 
-        # Mock health check MLflow
-        mock_health_mlflow.search_experiments.return_value = []
+        # Mock health check MLflow connection
+        mock_check_mlflow.return_value = True
 
         # Clear any cached services
         from app.services.model_service import get_model_service

@@ -85,6 +85,7 @@ api:
     logLevel: "INFO"
     modelName: "card_approval_model"
     modelStage: "Production"
+    modelVersion: "latest"
 
   # MLflow connection
   mlflow:

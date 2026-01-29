@@ -19,28 +19,12 @@ Quick guide to reproduce the Card Approval Prediction project.
 git clone https://github.com/thanhphat-19/card-approval-prediction.git
 cd card-approval-prediction
 
-# Configure environment
-cp config.example.env config.env
-# Edit config.env: set GCP_PROJECT_ID and passwords
-
-# 3. Copy Terraform variables
+# Copy Terraform variables
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 # Edit terraform.tfvars: set project_id
 ```
 
-**Required in `config.env`:**
-```bash
-GCP_PROJECT_ID=your-project-id
-POSTGRES_APP_PASSWORD=secure-password
-POSTGRES_MLFLOW_PASSWORD=secure-password
-GRAFANA_ADMIN_PASSWORD=secure-password
-```
-
-**Export variables**
-
-```bash
-source config.env
-```
+> 📖 **Configuration Reference**: See [08_Configuration.md](08_Configuration.md) for all configuration values.
 
 ## Step 2: Prepare Development Environment
 
@@ -100,16 +84,7 @@ docker push ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}/${IMAGE_NAME}:latest
 ```
 
 
-## Quick Reference
 
-| File | Purpose |
-|------|---------|
-| `config.example.env` | Template (committed) |
-| `config.env` | Your config (gitignored) |
-| `terraform/terraform.tfvars.example` | Template (committed) |
-| `terraform/terraform.tfvars` | Your config (gitignored) |
-
----
 
 ## Next Steps
 

@@ -79,4 +79,4 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-v --cov=cap_model --cov-report=term-missing --cov-report=html"
+addopts = "-v --cov=app --cov=training --cov-report=term-missing --cov-report=html"

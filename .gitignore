@@ -232,24 +232,43 @@ credentials.json
 # Crash logs
 crash.log
 
+# =============================================================================
 # Project-specific artifacts
-mlruns/
-cap_model/data/raw/
-cap_model/models/*.pkl
-cap_model/models/*.json
-cap_model/outputs/
-cap_model/data/processed/
-cap_model/preprocessors/
-cap_model/models/evaluation
-catboost_info/
-*.csv.gz
+# =============================================================================
 
+# MLflow local runs
+mlruns/
+
+# Data files (keep .gitkeep)
+data/raw/*.csv
+data/raw/*.gz
+data/processed/*.csv
+data/processed/*.pkl
+data/processed/*.json
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/processed/feature_names.json
+
+# Model artifacts (keep .gitkeep)
+models/*.pkl
+models/*.json
+models/evaluation/*.png
+models/evaluation/*.txt
+!models/.gitkeep
+
+# Training outputs
+training/outputs/
+training/catboost_info/
+training/preprocessors/*.pkl
+catboost_info/
+
+# Large data files
+*.csv.gz
 
 # Keep these json files
 !pyproject.json
 !package.json
 !tsconfig.json
-!cap_model/data/processed/feature_names.json
 
 # Secrets folder
 secrets/
@@ -267,3 +286,11 @@ values-local.yaml
 # Ansible vault files
 *.vault.yml
 vault.yml
+
+# =============================================================================
+# Logs and reports
+# =============================================================================
+logs/
+*.log
+reports/
+.scannerwork/

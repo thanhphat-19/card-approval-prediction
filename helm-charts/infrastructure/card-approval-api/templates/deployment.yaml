@@ -49,6 +49,8 @@ spec:
           value: {{ .Values.config.modelName | quote }}
         - name: MODEL_STAGE
           value: {{ .Values.config.modelStage | quote }}
+        - name: MODEL_VERSION
+          value: {{ .Values.config.modelVersion | default "latest" | quote }}
         - name: MLFLOW_TRACKING_URI
           value: {{ .Values.mlflow.trackingUri | quote }}
         - name: DATABASE_URL

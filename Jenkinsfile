@@ -30,6 +30,15 @@ pipeline {
         REGISTRY      = 'us-east1-docker.pkg.dev'
         REPOSITORY    = 'product-recsys-mlops/product-recsys-mlops-recsys'
         IMAGE_NAME    = 'card-approval-api'
+
+        // MLflow Configuration
+        MLFLOW_TRACKING_URI = 'http://34.139.72.244/mlflow'
+        MODEL_NAME          = 'card_approval_model'
+        MODEL_STAGE         = 'Production'
+        F1_THRESHOLD        = '0.90'
+
+        // SonarQube Configuration
+        SONAR_HOST_URL = 'http://sonarqube:9000'
     }
 
     stages {
@@ -59,7 +68,7 @@ pipeline {
         stage('Check Branch') {
             steps {
                 script {
-                    echo "✅ Building branch: ${env.BRANCH_NAME}"
+                    echo "  Building branch: ${env.BRANCH_NAME}"
 
                     // Determine if this is main branch or a PR branch
                     def isMainBranch = env.BRANCH_NAME in ['main', 'master', 'develop']
@@ -84,25 +93,108 @@ pipeline {
                 tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
                 docker run --rm -i \
                   -w /workspace \
-                  python:3.10-slim \
+                  python:3.11-slim \
                   bash -c "
                     tar xf - &&
                     apt-get update && apt-get install -y git --no-install-recommends &&
                     pip install flake8 pylint black isort &&
                     export PYTHONPATH=/workspace &&
                     echo '=== Flake8 ===' &&
-                    flake8 app cap_model || true &&
+                    flake8 app training/src scripts || true &&
                     echo '=== Pylint ===' &&
-                    pylint app cap_model --exit-zero &&
+                    pylint app training/src scripts --exit-zero &&
                     echo '=== Black ===' &&
-                    black --check app cap_model || true &&
+                    black --check app training/src scripts || true &&
                     echo '=== Isort ===' &&
-                    isort --check-only --skip-gitignore app cap_model || true
+                    isort --check-only --skip-gitignore app training/src scripts || true
                   "
                 '''
             }
         }
 
+        /* =====================
+           SONARQUBE ANALYSIS
+        ====================== */
+        stage('SonarQube Analysis') {
+            when {
+                anyOf {
+                    branch 'main'
+                    changeRequest()  // PR analysis
+                }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                    tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' \
+                             --exclude='data' --exclude='models' --exclude='mlruns' . | \
+                    docker run --rm -i \
+                      --network host \
+                      -e SONAR_TOKEN=${SONAR_TOKEN} \
+                      -w /workspace \
+                      sonarsource/sonar-scanner-cli:latest \
+                      bash -c "
+                        tar xf - &&
+                        sonar-scanner \
+                          -Dsonar.host.url=${SONAR_HOST_URL} \
+                          -Dsonar.token=${SONAR_TOKEN} \
+                          -Dsonar.qualitygate.wait=false
+                      "
+                    '''
+                }
+            }
+        }
+
+
+        /* =====================
+           MODEL EVALUATION
+        ====================== */
+        stage('Model Evaluation') {
+            when { branch 'main' }
+            steps {
+                sh '''
+                echo "🔍 Evaluating production model quality..."
+
+                # Run model evaluation against MLflow and output model version
+                tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
+                docker run --rm -i \
+                  --network host \
+                  -w /workspace \
+                  -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+                  -e MODEL_NAME=${MODEL_NAME} \
+                  -e MODEL_STAGE=${MODEL_STAGE} \
+                  -e PYTHONPATH=/workspace:/workspace/training \
+                  python:3.11-slim \
+                  bash -c "
+                    tar xf - &&
+                    pip install --quiet mlflow pandas scikit-learn loguru &&
+                    python scripts/evaluate_model.py \
+                      --threshold ${F1_THRESHOLD} \
+                      --data-dir data/processed \
+                      --output-file /workspace/.model-info.env &&
+                    cat /workspace/.model-info.env
+                  " > .model-info.env
+
+                # Display model info
+                echo "Model info:"
+                cat .model-info.env
+                '''
+
+                // Read model version into environment variable
+                script {
+                    if (fileExists('.model-info.env')) {
+                        def modelInfo = readFile('.model-info.env').trim()
+                        modelInfo.split('\n').each { line ->
+                            def parts = line.split('=')
+                            if (parts.size() == 2) {
+                                env."${parts[0]}" = parts[1]
+                            }
+                        }
+                        echo "Model Version: ${env.MODEL_VERSION}"
+                        echo "Model Run ID: ${env.MODEL_RUN_ID}"
+                    }
+                }
+            }
+        }
 
         /* =====================
            BUILD IMAGE
@@ -165,14 +257,19 @@ pipeline {
             when { branch 'main' }
             steps {
                 withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
-                    sh '''
+                    sh """
                     # Bundle GCP key and helm charts, then pipe into container
                     mkdir -p .tmp-deploy
-                    cp "$GCP_KEY" .tmp-deploy/gcp-key.json
+                    cp "\$GCP_KEY" .tmp-deploy/gcp-key.json
                     cp -r helm-charts .tmp-deploy/
+
+                    # Get model version (default to 'latest' if not set)
+                    MODEL_VER=\${MODEL_VERSION:-latest}
+                    echo " Deploying with model version: \$MODEL_VER"
 
                     tar cf - -C .tmp-deploy . | docker run --rm -i \
                       -e USE_GKE_GCLOUD_AUTH_PLUGIN=True \
+                      -e MODEL_VERSION=\$MODEL_VER \
                       google/cloud-sdk:latest \
                       bash -c "
                         mkdir -p /deploy && cd /deploy && tar xf - &&
@@ -189,13 +286,19 @@ pipeline {
                           --reuse-values \
                           --set api.image.repository=${REGISTRY}/${REPOSITORY}/${IMAGE_NAME} \
                           --set api.image.tag=${IMAGE_TAG} \
+                          --set api.config.modelVersion=\\\$MODEL_VERSION \
                           --timeout 10m \
                           --wait \
-                          --atomic
+                          --atomic &&
+
+                        # Force rolling restart to ensure pods load the latest model
+                        echo 'Triggering rolling restart to load new model...' &&
+                        kubectl rollout restart deployment/card-approval-api -n ${GKE_NAMESPACE} &&
+                        kubectl rollout status deployment/card-approval-api -n ${GKE_NAMESPACE} --timeout=5m
                       "
 
                     rm -rf .tmp-deploy
-                    '''
+                    """
                 }
             }
         }
@@ -203,14 +306,23 @@ pipeline {
 
     post {
         always {
-            // Always clean up secrets, even on failure
-            sh 'rm -rf .tmp-deploy || true'
+            // Always clean up secrets and temp files
+            sh 'rm -rf .tmp-deploy .model-info.env || true'
+            // Clean up dangling Docker images to save disk space
+            sh 'docker image prune -f || true'
         }
         success {
-            echo '✅ Pipeline completed successfully'
+            echo 'Pipeline completed successfully'
+            script {
+                if (env.BRANCH_NAME == 'main') {
+                    echo "  Deployed image: ${env.REGISTRY}/${env.REPOSITORY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    echo " Model version: ${env.MODEL_VERSION ?: 'latest'}"
+                }
+            }
         }
         failure {
-            echo '❌ Pipeline failed'
+            echo ' Pipeline failed'
+            echo "Branch: ${env.BRANCH_NAME}, Commit: ${env.GIT_COMMIT?.take(7) ?: 'unknown'}"
         }
     }
 }
