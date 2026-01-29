@@ -249,18 +249,23 @@ data/processed/*.json
 !data/processed/.gitkeep
 !data/processed/feature_names.json
 
-# Model artifacts (keep .gitkeep)
-models/*.pkl
-models/*.json
-models/evaluation/*.png
-models/evaluation/*.txt
-!models/.gitkeep
+
 
 # Training outputs
 training/outputs/
 training/catboost_info/
 training/preprocessors/*.pkl
 catboost_info/
+
+# Training experiment data
+training/data/raw/
+training/data/processed/*.csv
+training/data/processed/*.pkl
+!training/data/processed/feature_names.json
+training/models/*.txt
+training/models/*.png
+training/models/
+models/
 
 # Large data files
 *.csv.gz

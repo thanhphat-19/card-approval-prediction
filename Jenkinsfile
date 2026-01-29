@@ -128,6 +128,7 @@ pipeline {
                     tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' \
                              --exclude='data' --exclude='models' --exclude='mlruns' . | \
                     docker run --rm -i \
+                      --user root \
                       --network host \
                       -e SONAR_TOKEN=${SONAR_TOKEN} \
                       -w /workspace \
