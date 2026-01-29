@@ -48,6 +48,11 @@ export NGINX_IP=$(kubectl get svc nginx-ingress-ingress-nginx-controller -n ingr
 echo $NGINX_IP
 ```
 
+Then, run
+
+```bash
+kubectl apply -f manifests/ingress.yaml
+```
 ---
 
 ## Card Approval API (Swagger)
@@ -238,6 +243,8 @@ kubectl logs -n ingress-nginx -l app.kubernetes.io/component=controller --tail=5
 # Get LoadBalancer IP
 export NGINX_IP=$(kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo $NGINX_IP
+
+
 
 # Test all services
 curl -I http://$NGINX_IP/health          # API
