@@ -167,7 +167,7 @@ pipeline {
                   python:3.11-slim \
                   bash -c "
                     tar xf - &&
-                    pip install --quiet mlflow pandas scikit-learn loguru &&
+                    pip install --quiet mlflow pandas scikit-learn loguru catboost lightgbm xgboost joblib numpy &&
                     python scripts/evaluate_model.py \
                       --threshold ${F1_THRESHOLD} \
                       --data-dir data/processed \
