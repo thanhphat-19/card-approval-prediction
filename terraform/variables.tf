@@ -18,7 +18,7 @@ variable "zone" {
 variable "cluster_name" {
   description = "Name of the GKE cluster"
   type        = string
-  default     = "card-approval-prediction-gke"
+  default     = "card-approval-prediction-mlops-gke"
 }
 
 variable "machine_type" {
