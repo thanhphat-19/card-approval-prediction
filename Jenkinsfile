@@ -168,7 +168,7 @@ pipeline {
                   bash -c "
                     set -e
                     tar xf -
-                    pip install --quiet mlflow pandas scikit-learn loguru joblib numpy google-cloud-storage
+                    pip install --quiet mlflow pandas scikit-learn loguru joblib numpy google-cloud-storage xgboost lightgbm catboost pyyaml
                     python scripts/evaluate_model.py \
                       --threshold ${F1_THRESHOLD} \
                       --data-dir data/processed \
