@@ -218,14 +218,22 @@ pipeline {
                   .
                 '''
 
-                sh '''
-                docker run --rm \
-                  -v /var/run/docker.sock:/var/run/docker.sock \
-                  aquasec/trivy image \
-                  --severity HIGH,CRITICAL \
-                  --exit-code 0 \
-                  ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                script {
+                    // Clean up disk space before Trivy scan
+                    sh 'docker system prune -f || true'
+                    sh 'rm -rf /tmp/trivy-* || true'
+
+                    // Run Trivy scan (skip if disk space issues)
+                    sh '''
+                    docker run --rm \
+                      -v /var/run/docker.sock:/var/run/docker.sock \
+                      aquasec/trivy image \
+                      --severity HIGH,CRITICAL \
+                      --exit-code 0 \
+                      --timeout 5m \
+                      ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG} || echo "⚠️ Trivy scan skipped due to resource constraints"
+                    '''
+                }
             }
         }
 

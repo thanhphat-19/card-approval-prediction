@@ -7,7 +7,7 @@
   vars:
     instance_name: jenkins-server
     machine_type: n2-standard-4
-    disk_size: 10
+    disk_size: 50  # Increased from 10GB to 50GB for Docker images and builds
     image_family: ubuntu-2204-lts
     image_project: ubuntu-os-cloud
 
