@@ -173,11 +173,11 @@ pipeline {
                       --data-dir data/processed \
                       --output-file /workspace/.model-info.env &&
                     cat /workspace/.model-info.env
-                  " > .model-info.env
+                  " | tee .model-info.env
 
                 # Display model info
-                echo "Model info:"
-                cat .model-info.env
+                echo "Model info extracted:"
+                grep -E '^MODEL_' .model-info.env || echo "No model info found"
                 '''
 
                 // Read model version into environment variable
