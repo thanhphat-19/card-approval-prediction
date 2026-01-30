@@ -171,7 +171,7 @@ pipeline {
                     pip install --quiet mlflow pandas scikit-learn loguru joblib numpy google-cloud-storage xgboost lightgbm catboost pyyaml
                     python scripts/evaluate_model.py \
                       --threshold ${F1_THRESHOLD} \
-                      --data-dir data/processed \
+                      --data-dir training/data/processed \
                       --output-file /workspace/.model-info.env
                     cat /workspace/.model-info.env
                   " | tee .model-info.env
