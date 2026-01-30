@@ -167,8 +167,7 @@ pipeline {
                   python:3.11-slim \
                   bash -c "
                     tar xf - &&
-                    apt-get update -qq && apt-get install -y -qq --no-install-recommends libgomp1 >/dev/null 2>&1 &&
-                    pip install --quiet mlflow pandas scikit-learn loguru catboost lightgbm xgboost joblib numpy seaborn matplotlib imbalanced-learn pyyaml &&
+                    pip install --quiet mlflow pandas scikit-learn loguru joblib numpy &&
                     python scripts/evaluate_model.py \
                       --threshold ${F1_THRESHOLD} \
                       --data-dir data/processed \
