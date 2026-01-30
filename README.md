@@ -277,4 +277,4 @@ If you use Card Approval Prediction in your research, please cite it as follows:
 
 ## Contact
 
-For questions, issues, or collaborations, please open an issue or contact thanhphat352@gmail.com - test cicd
+For questions, issues, or collaborations, please open an issue or contact thanhphat352@gmail.com
