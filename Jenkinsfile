@@ -237,15 +237,21 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCP_KEY')]) {
                     sh '''
-                    # Get access token from gcloud and use it for docker login
-                    ACCESS_TOKEN=$(cat "$GCP_KEY" | docker run --rm -i \
+                    # Copy GCP key to temp directory and use tar (same pattern as Deploy stage)
+                    mkdir -p .tmp-push
+                    cp "$GCP_KEY" .tmp-push/gcp-key.json
+
+                    # Get access token from gcloud
+                    ACCESS_TOKEN=$(tar cf - -C .tmp-push . | docker run --rm -i \
                       google/cloud-sdk:slim \
                       bash -c "
-                        cat > /tmp/gcp-key.json &&
-                        gcloud auth activate-service-account --key-file=/tmp/gcp-key.json &&
-                        gcloud auth print-access-token &&
-                        rm -f /tmp/gcp-key.json
+                        mkdir -p /tmp/auth && cd /tmp/auth && tar xf - &&
+                        gcloud auth activate-service-account --key-file=/tmp/auth/gcp-key.json &&
+                        gcloud auth print-access-token
                       ")
+
+                    # Cleanup temp directory
+                    rm -rf .tmp-push
 
                     # Verify we got a token
                     if [ -z "$ACCESS_TOKEN" ]; then
