@@ -14,7 +14,7 @@ End-to-end **MLOps pipeline** for credit card approval prediction using machine 
   - [Overview](#overview)
   - [🛠️ Tech Stack](#️-tech-stack)
   - [📁 Project Structure](#-project-structure)
-  - [  Quick Start](#-quick-start)
+  - [Quick Start](#quick-start)
     - [Prerequisites](#prerequisites)
     - [Clone \& Configure](#clone--configure)
   - [📡 API Endpoints](#-api-endpoints)
@@ -277,4 +277,4 @@ If you use Card Approval Prediction in your research, please cite it as follows:
 
 ## Contact
 
-For questions, issues, or collaborations, please open an issue orcontact thanhphat352@gmail.com
+For questions, issues, or collaborations, please open an issue or contact thanhphat352@gmail.com - test cicd
