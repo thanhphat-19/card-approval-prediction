@@ -166,18 +166,25 @@ pipeline {
                   -e PYTHONPATH=/workspace:/workspace/training \
                   python:3.11-slim \
                   bash -c "
-                    tar xf - &&
-                    pip install --quiet mlflow pandas scikit-learn loguru joblib numpy &&
+                    set -e
+                    tar xf -
+                    pip install --quiet mlflow pandas scikit-learn loguru joblib numpy
                     python scripts/evaluate_model.py \
                       --threshold ${F1_THRESHOLD} \
                       --data-dir data/processed \
-                      --output-file /workspace/.model-info.env &&
+                      --output-file /workspace/.model-info.env
                     cat /workspace/.model-info.env
                   " | tee .model-info.env
 
+                # Verify model info was extracted
+                if ! grep -qE '^MODEL_VERSION=' .model-info.env; then
+                    echo "ERROR: Model evaluation failed - no MODEL_VERSION found"
+                    exit 1
+                fi
+
                 # Display model info
                 echo "Model info extracted:"
-                grep -E '^MODEL_' .model-info.env || echo "No model info found"
+                grep -E '^MODEL_' .model-info.env
                 '''
 
                 // Read model version into environment variable
@@ -235,10 +242,16 @@ pipeline {
                       google/cloud-sdk:slim \
                       bash -c "
                         cat > /tmp/gcp-key.json &&
-                        gcloud auth activate-service-account --key-file=/tmp/gcp-key.json 2>/dev/null &&
+                        gcloud auth activate-service-account --key-file=/tmp/gcp-key.json &&
                         gcloud auth print-access-token &&
                         rm -f /tmp/gcp-key.json
                       ")
+
+                    # Verify we got a token
+                    if [ -z "$ACCESS_TOKEN" ]; then
+                        echo "ERROR: Failed to get GCP access token"
+                        exit 1
+                    fi
 
                     # Login to Artifact Registry using the access token
                     echo "$ACCESS_TOKEN" | docker login -u oauth2accesstoken --password-stdin https://${REGISTRY}
