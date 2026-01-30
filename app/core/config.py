@@ -12,14 +12,6 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
 
-    # Database
-    DATABASE_URL: str = "postgresql://user:pass@localhost:5432/db"
-
-    # PostgreSQL credentials
-    POSTGRES_DB: str = "mlflow"
-    POSTGRES_USER: str = "mlflow"
-    POSTGRES_PASSWORD: str = ""
-
     # MLflow
     MLFLOW_TRACKING_URI: str = "http://127.0.0.1:5000"
     MODEL_NAME: str = "card_approval_model"

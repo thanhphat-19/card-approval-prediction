@@ -14,10 +14,6 @@ uvicorn[standard]==0.24.0
 pydantic==2.5.0
 pydantic-settings==2.1.0
 
-# Database
-sqlalchemy==2.0.23
-psycopg2-binary==2.9.9
-
 # MLflow Model Registry & Tracking
 mlflow==2.9.2
 google-cloud-storage==2.10.0  # Required for GCS artifact storage

@@ -141,8 +141,8 @@ def main():
     parser.add_argument(
         "--data-dir",
         type=str,
-        default="data/processed",
-        help="Path to processed data directory (default: data/processed)",
+        default="training/data/processed",
+        help="Path to processed data directory (default: training/data/processed)",
     )
     parser.add_argument(
         "--tracking-uri",

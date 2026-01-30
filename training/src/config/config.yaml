@@ -2,8 +2,8 @@
 
 # Data Configuration
 data:
-  raw_data_path: "data/processed/credit_applications.csv"
-  processed_data_path: "data/processed/processed_data.csv"
+  raw_data_dir: "data/raw"
+  processed_data_dir: "data/processed"
   test_size: 0.2
   validation_size: 0.1
   random_state: 42
