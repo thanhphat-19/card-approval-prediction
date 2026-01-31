@@ -32,7 +32,7 @@ pipeline {
         IMAGE_NAME    = 'card-approval-api'
 
         // MLflow Configuration
-        MLFLOW_TRACKING_URI = 'http://35.196.35.190/mlflow'
+        MLFLOW_TRACKING_URI = 'http://34.138.115.181/mlflow'
         MODEL_NAME          = 'card_approval_model'
         MODEL_STAGE         = 'Production'
         F1_THRESHOLD        = '0.90'
