@@ -73,13 +73,14 @@ export PROJECT_ID=product-recsys-mlops
 export GSA_NAME=mlflow-gcs
 export SA_EMAIL=${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
 
-# Generate new key
-gcloud iam service-accounts keys create training/mlflow-gcs-key.json \
+# Generate new key (use standard location)
+mkdir -p ~/secrets
+gcloud iam service-accounts keys create ~/secrets/gcp-key.json \
   --iam-account=${SA_EMAIL} \
   --project=${PROJECT_ID}
 
 # Verify the key works
-gcloud auth activate-service-account --key-file=training/mlflow-gcs-key.json
+gcloud auth activate-service-account --key-file=~/secrets/gcp-key.json
 gcloud auth print-access-token  # Should succeed without errors
 
 # Switch back to your account
@@ -129,16 +130,16 @@ gcloud projects get-iam-policy ${GCP_PROJECT_ID} \
 
 | ID | Type | Value |
 |----|------|-------|
-| `gcp-service-account` | Secret file | Upload `training/mlflow-gcs-key.json` from Step 4 |
+| `gcp-service-account` | Secret file | Upload `~/secrets/gcp-key.json` from Step 4 |
 | `gcp-project-id` | Secret text | Your GCP project ID |
 | `github-credentials` | Username/password | GitHub username + PAT |
 | `github-pat` | Secret text | GitHub PAT (same token) |
-| `sonarqube-token` | Secret text | SonarQube token |
+| `sonarqube-token` | Secret text | SonarQube auth token |
 
 **Generate GitHub PAT:** https://github.com/settings/tokens
 - Scopes: `repo`, `admin:repo_hook`
 
-**⚠️ Important:** Use the `training/mlflow-gcs-key.json` file generated in Step 4, not an old key.
+**⚠️ Important:** Use the `/home/thanhphat/secrets/gcp-key.json` file generated in Step 4, not an old key.
 
 ---
 
@@ -266,13 +267,14 @@ git push origin feature/test-cicd
 If you see `Invalid JWT Signature` error:
 
 ```bash
-# 1. Regenerate service account key
-gcloud iam service-accounts keys create training/mlflow-gcs-key.json \
+# 1. Regenerate service account key (use standard location)
+mkdir -p ~/secrets
+gcloud iam service-accounts keys create ~/secrets/gcp-key.json \
   --iam-account=mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com \
   --project=product-recsys-mlops
 
 # 2. Verify it works
-gcloud auth activate-service-account --key-file=training/mlflow-gcs-key.json
+gcloud auth activate-service-account --key-file=~/secrets/gcp-key.json
 gcloud auth print-access-token
 
 # 3. Update Jenkins credential (Manage Jenkins → Credentials → gcp-service-account)
