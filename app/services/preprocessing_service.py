@@ -32,7 +32,7 @@ class PreprocessingService:
     def _load_from_local_path(self):
         """Load preprocessing artifacts from embedded model path"""
         model_path = Path(self.settings.MODEL_PATH)
-        preprocessing_path = model_path / "preprocessing"
+        preprocessing_path = model_path / "preprocessors"
 
         logger.info(f"Loading preprocessing from local path: {preprocessing_path}")
 

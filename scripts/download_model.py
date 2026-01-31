@@ -78,18 +78,30 @@ def download_model(
     # Also download preprocessing artifacts from the same run
     print(f"\n⬇️  Downloading preprocessing artifacts from run: {run_id}", file=sys.stderr)
     try:
-        preprocessing_path = output_path / "preprocessing"
-        preprocessing_path.mkdir(parents=True, exist_ok=True)
-
         # Download preprocessing artifacts
-        mlflow.artifacts.download_artifacts(
+        preprocessing_artifacts = mlflow.artifacts.download_artifacts(
             run_id=run_id,
-            artifact_path="preprocessing",
-            dst_path=str(preprocessing_path.parent),
+            artifact_path="preprocessors",
+            dst_path=str(output_path),
         )
-        print(f"Preprocessing artifacts downloaded", file=sys.stderr)
+        print(f"✅ Preprocessing artifacts downloaded to: {preprocessing_artifacts}", file=sys.stderr)
+
+        # Verify files exist
+        preprocessing_path = Path(preprocessing_artifacts)
+        required_files = ["scaler.pkl", "pca.pkl", "feature_names.json"]
+        for file in required_files:
+            file_path = preprocessing_path / file
+            if file_path.exists():
+                print(f"   ✓ {file}", file=sys.stderr)
+            else:
+                print(f"   ✗ {file} NOT FOUND", file=sys.stderr)
+
     except Exception as e:
-        print(f"Could not download preprocessing artifacts: {e}", file=sys.stderr)
+        print(f"⚠️  Could not download preprocessing artifacts: {e}", file=sys.stderr)
+        print(f"   Error type: {type(e).__name__}", file=sys.stderr)
+        import traceback
+
+        traceback.print_exc(file=sys.stderr)
         print("   Preprocessing will use MLflow at runtime if needed", file=sys.stderr)
 
     # Save model metadata
