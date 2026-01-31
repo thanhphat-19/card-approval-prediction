@@ -1,15 +1,44 @@
-# Setup Guide
+# Setup & Configuration Guide
 
-Quick guide to reproduce the Card Approval Prediction project.
+Complete guide to setup and configure the Card Approval Prediction MLOps project.
+
+---
 
 ## Prerequisites
 
+**Required Tools:**
 - GCP Account with billing enabled
 - `gcloud` CLI installed and authenticated
 - `kubectl` installed
 - `helm` v3+ installed
 - `terraform` v1.6+ installed
 - `ansible` installed (for Jenkins deployment)
+- `docker` installed
+
+---
+
+## Configuration Reference
+
+### GCP Resources
+
+| Resource | Value | Description |
+|----------|-------|-------------|
+| **Project ID** | `product-recsys-mlops` | GCP Project |
+| **Region** | `us-east1` | Primary region |
+| **Zone** | `us-east1-b` | Primary zone |
+| **GKE Cluster** | `card-approval-prediction-mlops-gke` | Kubernetes cluster |
+| **GCS Bucket** | `product-recsys-mlops-recsys-data` | MLflow artifacts |
+| **Service Account** | `mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com` | Workload Identity |
+| **Artifact Registry** | `us-east1-docker.pkg.dev/product-recsys-mlops/product-recsys-mlops-recsys` | Docker images |
+
+### Key Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `config.env` | Infrastructure variables (passwords, GCP settings) |
+| `terraform/terraform.tfvars` | Terraform input variables |
+| `Jenkinsfile` | CI/CD pipeline configuration |
+| `helm-charts/*/values.yaml` | Kubernetes deployment settings |
 
 ---
 
@@ -19,35 +48,43 @@ Quick guide to reproduce the Card Approval Prediction project.
 git clone https://github.com/thanhphat-19/card-approval-prediction.git
 cd card-approval-prediction
 
-# Copy Terraform variables
+# Copy and edit configuration files
+cp config-example.env config.env
+# Edit config.env: Set GCP_PROJECT_ID, passwords, service accounts
+
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-# Edit terraform.tfvars: set project_id
+# Edit terraform.tfvars: Set project_id
 ```
 
-> 📖 **Configuration Reference**: See [08_Configuration.md](08_Configuration.md) for all configuration values.
+**Key variables to configure in `config.env`:**
+```bash
+GCP_PROJECT_ID=product-recsys-mlops
+GCP_REGION=us-east1
+GCP_ZONE=us-east1-b
+GCS_BUCKET_NAME=product-recsys-mlops-recsys-data
+POSTGRES_APP_PASSWORD=<strong-password>
+POSTGRES_MLFLOW_PASSWORD=<strong-password>
+GRAFANA_ADMIN_PASSWORD=<strong-password>
+```
 
-## Step 2: Prepare Development Environment
+## Step 2: Development Environment
 
-1. Follow steps in [this website](https://docs.conda.io/en/latest/miniconda.html#installing) to install MiniConda.
-2. Create and **activate** the virtual environment using conda.
-3. Install pre-commit
+```bash
+# Install MiniConda (if not already installed)
+# https://docs.conda.io/en/latest/miniconda.html#installing
 
-    ```
-    pip install pre-commit
-    ```
+# Create virtual environment
+conda create -n card-approval python=3.11
+conda activate card-approval
 
-4. Install Git Hook
+# Install dependencies
+pip install -r requirements.txt
 
-    ```
-    pre-commit install
-    ```
+# Setup pre-commit hooks
+pip install pre-commit
+pre-commit install
+```
 
-
-5. Install global dependencies:
-
-    ```
-    pip install -r requirements.txt
-    ```
 ---
 
 ## Step 3: Deploy Infrastructure
@@ -75,20 +112,76 @@ kubectl get nodes
 ## Step 5: Build & Push Docker Image
 
 ```bash
+source config.env
+
+# Configure Docker for Artifact Registry
 gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev
 
+# Build and push
 docker build -t card-approval-api:latest .
 docker tag card-approval-api:latest \
   ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}/${IMAGE_NAME}:latest
 docker push ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}/${IMAGE_NAME}:latest
 ```
 
+---
 
+## Configuration Details
 
+### Jenkins CI/CD Variables
+
+Configured in `Jenkinsfile` environment block:
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `PROJECT_ID` | `product-recsys-mlops` | GCP Project |
+| `GKE_CLUSTER` | `card-approval-prediction-mlops-gke` | Target cluster |
+| `GKE_NAMESPACE` | `card-approval` | Deployment namespace |
+| `IMAGE_NAME` | `card-approval-api` | Docker image name |
+| `MLFLOW_TRACKING_URI` | `http://<IP>/mlflow` | MLflow server |
+| `MODEL_NAME` | `card_approval_model` | Model registry name |
+| `MODEL_STAGE` | `Production` | Model stage |
+| `F1_THRESHOLD` | `0.90` | Quality gate |
+
+### Jenkins Credentials
+
+Configure in **Manage Jenkins → Credentials**:
+
+| ID | Type | Purpose |
+|----|------|---------|
+| `gcp-service-account` | Secret file | GCP authentication |
+| `gcp-project-id` | Secret text | Project reference |
+| `github-credentials` | Username/password | Clone repository |
+| `github-pat` | Secret text | PR status updates |
+| `sonarqube-token` | Secret text | Code analysis |
+
+### Helm Chart Values
+
+**API Stack** (`helm-charts/card-approval/values.yaml`):
+```yaml
+api:
+  image:
+    repository: us-east1-docker.pkg.dev/.../card-approval-api
+    tag: latest
+  env:
+    MLFLOW_TRACKING_URI: "http://card-approval-training-mlflow:5000"
+    MODEL_NAME: "card_approval_model"
+    MODEL_STAGE: "Production"
+```
+
+**MLflow Stack** (`helm-charts/card-approval-training/values.yaml`):
+```yaml
+mlflow:
+  gcs:
+    bucket: "product-recsys-mlops-recsys-data"
+    artifactPath: "mlflow-artifacts"
+```
+
+---
 
 ## Next Steps
 
-1. [Helm Deployment](01_Helm_Deployment.md)
-2. [Model Training](02_MLflow_Training.md)
-3. [CI/CD Pipeline](04_CICD_Pipeline.md)
-4. [Monitoring](05_Monitoring.md)
+1. **[Helm Deployment](01_Helm_Deployment.md)** - Deploy all services to Kubernetes
+2. **[Model Training](02_MLflow_Training.md)** - Train and register models
+3. **[CI/CD Pipeline](03_CICD_Pipeline.md)** - Setup Jenkins automation
+4. **[Monitoring](05_Monitoring.md)** - Configure Prometheus & Grafana

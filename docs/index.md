@@ -20,13 +20,11 @@ cp config.example.env config.env  # Edit with your GCP project ID
 
 | Doc | Description |
 |-----|-------------|
-| [00_Setup_Guide](./00_Setup_Guide.md) | ⚙️ **Start here!** |
-| [01_Helm_Deployment](./01_Helm_Deployment.md) | Kubernetes deployment |
-| [02_MLflow_Training](./02_MLflow_Training.md) | Model training |
-| [03_API_Service](./03_API_Service.md) | FastAPI reference |
-| [04_CICD_Pipeline](./04_CICD_Pipeline.md) | Jenkins CI/CD |
-| [05_Monitoring](./05_Monitoring.md) | Prometheus + Grafana |
-| [06_NGINX](./06_NGINX.md) | Services via NGINX |
+| [00_Setup_Guide](./00_Setup_Guide.md) | ⚙️ **Start here!** Setup & configuration reference |
+| [01_Helm_Deployment](./01_Helm_Deployment.md) | Deploy MLflow, API, and monitoring to Kubernetes |
+| [02_MLflow_Training](./02_MLflow_Training.md) | Train and register models with MLflow |
+| [03_CICD_Pipeline](./03_CICD_Pipeline.md) | Jenkins CI/CD pipeline setup |
+| [04_NGINX](./04_NGINX.md) | NGINX Ingress configuration |
 
 ---
 
@@ -35,11 +33,16 @@ cp config.example.env config.env  # Edit with your GCP project ID
 ```
 card-approval-prediction/
 ├── app/              # FastAPI application
-├── cap_model/        # ML training pipeline
+├── training/         # ML training pipeline
+│   ├── scripts/      # Training, evaluation, download scripts
+│   └── src/          # Data processing and model utilities
+├── scripts/          # CI/CD helper scripts
 ├── helm-charts/      # Kubernetes deployments
-├── terraform/        # Infrastructure as Code
-├── ansible/          # Jenkins VM setup
-├── tests/            # Test suites
+│   ├── card-approval/           # API stack
+│   ├── card-approval-training/  # MLflow stack
+│   └── infrastructure/          # Base charts
+├── terraform/        # GCP infrastructure as code
+├── ansible/          # Jenkins deployment automation
 └── docs/             # Documentation
 ```
 

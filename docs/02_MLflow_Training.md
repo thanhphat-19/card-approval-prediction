@@ -4,7 +4,17 @@ Train credit card approval models with MLflow tracking.
 
 ---
 
-## Step 1: Setup Kaggle API (for data download)
+## Prerequisites
+
+Before starting, ensure you have:
+1. Completed the [Helm Deployment Guide](01_Helm_Deployment.md) - MLflow must be deployed and running
+2. MLflow accessible via port-forward or ingress
+3. GCS bucket configured in Helm deployment for artifact storage
+4. Kaggle API credentials configured
+
+---
+
+## Step 1: Setup Kaggle API
 
 ```bash
 # Create Kaggle directory
@@ -23,7 +33,7 @@ kaggle --version
 ## Step 2: Download Data
 
 ```bash
-cd cap_model
+cd training
 python scripts/download_data.py
 ```
 
@@ -51,6 +61,7 @@ kubectl port-forward svc/card-approval-training-mlflow 5000:5000 -n card-approva
 ## Step 4: Preprocess Data
 
 ```bash
+cd training
 python scripts/run_preprocessing.py
 ```
 
@@ -71,13 +82,15 @@ data/processed/
 ## Step 5: Train Models
 
 ```bash
+cd training
 python scripts/run_training.py
 ```
 
 **What happens:**
 1. Trains: XGBoost, LightGBM, CatBoost, AdaBoost, NaiveBayes
 2. Logs metrics & artifacts to MLflow
-3. Registers best model (by F1-Score)
+3. Registers best model (by F1-Score) to MLflow Model Registry
+4. Stores model and preprocessor artifacts in GCS bucket (configured in Helm deployment)
 
 ---
 
@@ -92,31 +105,6 @@ python scripts/run_training.py
 Open http://localhost:5000
 
 - **Experiments**: View all training runs
-- **Models**: Check `card_approval_model` is in Production stage
+- **Models**: Check `card_approval_model`
 
 ---
-
-## Step 7: Manual Model Registration (if needed)
-
-```python
-import mlflow
-client = mlflow.MlflowClient()
-client.transition_model_version_stage(
-    name="card_approval_model",
-    version="1",
-    stage="Production"
-)
-```
-
----
-
-## Pipeline Summary
-
-```
-Kaggle Data → Preprocess → Train → MLflow Registry → API
-     ↓             ↓          ↓
-  438K rows    SMOTE+PCA   XGBoost
-                           96.7% acc
-```
-
-**Training time:** ~5-10 minutes
