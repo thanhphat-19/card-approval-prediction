@@ -16,7 +16,7 @@ pipeline {
 
     environment {
         // =============================================================
-        // GCP Configuration (from config.env)
+        // GCP Configuration
         // =============================================================
         PROJECT_ID    = 'product-recsys-mlops'
         ZONE          = 'us-east1-b'
@@ -26,7 +26,7 @@ pipeline {
         GKE_CLUSTER   = 'card-approval-prediction-mlops-gke'
         GKE_NAMESPACE = 'card-approval'
 
-        // Docker Registry (from config.env: DOCKER_REPOSITORY)
+        // Docker Registry
         REGISTRY      = 'us-east1-docker.pkg.dev'
         REPOSITORY    = 'product-recsys-mlops/product-recsys-mlops-recsys'
         IMAGE_NAME    = 'card-approval-api'
