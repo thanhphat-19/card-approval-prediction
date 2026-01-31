@@ -102,7 +102,7 @@ class FeatureEngineer:
         Args:
             X: Raw features DataFrame
             y: Target Series
-            apply_smote: Whether to apply SMOTE+Tomek
+            apply_smote: Whether to apply SMOTE+Tomek (only on training set)
             apply_pca_transform: Whether to apply PCA
             n_components: Number of PCA components
             test_size: Proportion of test set
@@ -120,25 +120,38 @@ class FeatureEngineer:
         X_encoded = self.encode_features(X)
         self.feature_names = X_encoded.columns.tolist()
 
-        # 2. Apply SMOTE+Tomek if requested
+        # 2. Train-test split FIRST (on real data only!)
+        logger.info("Splitting data BEFORE SMOTE to prevent data leakage...")
+        X_train_encoded, X_test_encoded, y_train, y_test = self.train_test_split_data(X_encoded, y, test_size=test_size)
+
+        logger.info(f"Original split - Train: {len(y_train)}, Test: {len(y_test)}")
+        logger.info(f"  Train - Good: {sum(y_train==1)}, Bad: {sum(y_train==0)}")
+        logger.info(f"  Test - Good: {sum(y_test==1)}, Bad: {sum(y_test==0)}")
+
+        # 3. Apply SMOTE+Tomek ONLY to training set
         if apply_smote:
-            X_resampled, y_resampled = self.apply_smote_tomek(X_encoded, y)
+            X_train_resampled, y_train_resampled = self.apply_smote_tomek(X_train_encoded, y_train)
         else:
-            X_resampled, y_resampled = X_encoded, y
+            X_train_resampled, y_train_resampled = X_train_encoded, y_train
             logger.info("Skipping SMOTE+Tomek resampling")
 
-        # 3. Scale features
-        X_scaled = self.scale_features(X_resampled, fit=True)
+        # 4. Scale features (fit on train, transform both)
+        logger.info("Scaling: Fitting on training set, transforming both...")
+        X_train_scaled = self.scale_features(X_train_resampled, fit=True)
+        X_test_scaled = self.scale_features(X_test_encoded, fit=False)
 
-        # 4. Apply PCA if requested
+        # 5. Apply PCA (fit on train, transform both)
         if apply_pca_transform:
-            X_transformed = self.apply_pca(X_scaled, n_components=n_components, fit=True)
+            logger.info("PCA: Fitting on training set, transforming both...")
+            X_train = self.apply_pca(X_train_scaled, n_components=n_components, fit=True)
+            X_test = self.apply_pca(X_test_scaled, n_components=n_components, fit=False)
         else:
-            X_transformed = pd.DataFrame(X_scaled, columns=X_resampled.columns)
+            X_train = pd.DataFrame(X_train_scaled, columns=X_train_resampled.columns)
+            X_test = pd.DataFrame(X_test_scaled, columns=X_test_encoded.columns)
             logger.info("Skipping PCA transformation")
 
-        # 5. Train-test split
-        X_train, X_test, y_train, y_test = self.train_test_split_data(X_transformed, y_resampled, test_size=test_size)
+        # Update to match new variable names
+        y_train = y_train_resampled
 
         # 6. Save preprocessors if requested
         if save_preprocessors and output_dir:
