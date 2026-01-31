@@ -17,14 +17,42 @@ class PreprocessingService:
     """Service for preprocessing input data before model prediction"""
 
     def __init__(self, run_id: Optional[str] = None):
-        """Initialize preprocessing service and load artifacts from MLflow"""
+        """Initialize preprocessing service and load artifacts"""
         self.settings = get_settings()
         self.run_id = run_id
-        self.scaler, self.pca, self.feature_names = self._load_from_mlflow(run_id)
+
+        # Try loading from embedded model path first, fallback to MLflow
+        if self.settings.MODEL_PATH:
+            self.scaler, self.pca, self.feature_names = self._load_from_local_path()
+        else:
+            self.scaler, self.pca, self.feature_names = self._load_from_mlflow(run_id)
+
         logger.info(f"Preprocessing service ready ({len(self.feature_names)} features)")
+
+    def _load_from_local_path(self):
+        """Load preprocessing artifacts from embedded model path"""
+        model_path = Path(self.settings.MODEL_PATH)
+        preprocessing_path = model_path / "preprocessing"
+
+        logger.info(f"Loading preprocessing from local path: {preprocessing_path}")
+
+        if not preprocessing_path.exists():
+            logger.warning(f"Preprocessing path not found: {preprocessing_path}, falling back to MLflow")
+            return self._load_from_mlflow(self.run_id)
+
+        # Load artifacts
+        scaler = joblib.load(preprocessing_path / "scaler.pkl")
+        pca = joblib.load(preprocessing_path / "pca.pkl")
+
+        with open(preprocessing_path / "feature_names.json", "r", encoding="utf-8") as f:
+            feature_names = json.load(f)["feature_names"]
+
+        logger.info(f"Loaded preprocessing from embedded model (run_id: {self.run_id})")
+        return scaler, pca, feature_names
 
     def _load_from_mlflow(self, run_id: str):
         """Load preprocessing artifacts from MLflow run"""
+        logger.info(f"Loading preprocessing from MLflow (run_id: {run_id})")
         mlflow.set_tracking_uri(self.settings.MLFLOW_TRACKING_URI)
         artifact_uri = f"runs:/{run_id}/preprocessors"
         local_path = Path(mlflow.artifacts.download_artifacts(artifact_uri))
