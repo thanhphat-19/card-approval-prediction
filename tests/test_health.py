@@ -43,10 +43,10 @@ class TestHealthDegraded:
 
     def test_health_with_mlflow_down(self, client):
         """Test health when MLflow is unavailable."""
-        # Mock mlflow.search_experiments to raise an exception
+        # Mock check_mlflow_connection to return False
         with patch(
-            "app.routers.health.mlflow.search_experiments",
-            side_effect=Exception("Connection failed"),
+            "app.routers.health.check_mlflow_connection",
+            return_value=False,
         ):
             response = client.get("/health")
             assert response.status_code == 200

@@ -4,6 +4,7 @@ Pytest configuration and fixtures for Card Approval Prediction API tests.
 
 import os
 import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -11,7 +12,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# Add training/src to path for training module tests
+training_path = project_root / "training"
+if str(training_path) not in sys.path:
+    sys.path.insert(0, str(training_path))
 
 
 @pytest.fixture(scope="session")
@@ -37,10 +44,25 @@ def mock_preprocessing_service():
 @pytest.fixture
 def client(mock_model, mock_preprocessing_service):
     """Create test client with mocked dependencies."""
+    import json
+    from unittest.mock import mock_open
+
     # Set environment variables for testing
     os.environ["MLFLOW_TRACKING_URI"] = "http://localhost:5000"
     os.environ["MODEL_NAME"] = "card_approval_model"
     os.environ["MODEL_STAGE"] = "Production"
+
+    # Feature names JSON content for mocking
+    feature_names_json = json.dumps({"feature_names": ["feat1", "feat2", "feat3"]})
+
+    # Custom open that only mocks feature_names.json
+    original_open = open
+
+    def custom_open(*args, **kwargs):
+        filepath = str(args[0]) if args else ""
+        if "feature_names.json" in filepath:
+            return mock_open(read_data=feature_names_json)()
+        return original_open(*args, **kwargs)
 
     # Patch all external dependencies
     with patch("app.services.model_service.mlflow") as mock_mlflow, patch(
@@ -49,7 +71,11 @@ def client(mock_model, mock_preprocessing_service):
         "app.services.preprocessing_service.joblib"
     ) as mock_joblib, patch(
         "app.utils.mlflow_helpers.check_mlflow_connection"
-    ) as mock_check_mlflow:
+    ) as mock_check_mlflow, patch(
+        "app.services.preprocessing_service.open", custom_open
+    ), patch(
+        "app.services.model_service.load_model_with_flavor"
+    ) as mock_load_flavor:
         # Mock MLflow client for model service
         mock_client = MagicMock()
         mock_version = MagicMock()
@@ -59,6 +85,9 @@ def client(mock_model, mock_preprocessing_service):
         mock_client.search_model_versions.return_value = [mock_version]
         mock_utils_mlflow.tracking.MlflowClient.return_value = mock_client
         mock_mlflow.pyfunc.load_model.return_value = mock_model
+
+        # Mock load_model_with_flavor to return the mock_model with predict_proba
+        mock_load_flavor.return_value = mock_model
 
         # Mock preprocessing service artifacts loading
         mock_preproc_mlflow.artifacts.download_artifacts.return_value = "/tmp/mock_artifacts"
