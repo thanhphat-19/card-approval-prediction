@@ -20,9 +20,17 @@ settings = get_settings()
 async def lifespan(_app: FastAPI):
     """Lifespan events for startup and shutdown"""
     # Startup
-    logger.info(f"  Starting {settings.APP_NAME} v{settings.APP_VERSION}")
-    logger.info(f"📊 MLflow URI: {settings.MLFLOW_TRACKING_URI}")
-    logger.info(f" Model: {settings.MODEL_NAME} ({settings.MODEL_STAGE})")
+    logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
+    logger.info(f"MLflow URI: {settings.MLFLOW_TRACKING_URI}")
+    logger.info(f"Model: {settings.MODEL_NAME} ({settings.MODEL_STAGE})")
+
+    # Eagerly load model at startup (instead of lazy loading on first request)
+    from app.services.model_service import get_model_service
+
+    logger.info("⏳ Loading model...")
+    model_service = get_model_service()
+    logger.info(f"Model loaded: v{model_service.version} (run_id: {model_service.run_id})")
+    logger.info(f"Source: {model_service.get_model_info()['source']}")
 
     yield
 
