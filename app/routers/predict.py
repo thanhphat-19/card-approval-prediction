@@ -96,30 +96,6 @@ def _get_probabilities(
     return prob_approved, confidence
 
 
-@router.post("/reload-model")
-def reload_model(
-    model_service: ModelService = Depends(get_model_service),
-) -> Dict[str, object]:
-    """
-    Reload model from MLflow registry.
-
-    Useful after training a new model version.
-    """
-    try:
-        logger.info("Model reload requested")
-        model_service.reload_model()
-        model_info = model_service.get_model_info()
-
-        return {
-            "status": "success",
-            "message": "Model reloaded successfully",
-            "model_info": model_info,
-        }
-    except Exception as e:
-        logger.error(f"Model reload failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Model reload failed: {str(e)}") from e
-
-
 @router.get("/model-info")
 def get_model_info(
     model_service: ModelService = Depends(get_model_service),

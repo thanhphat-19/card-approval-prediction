@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     MODEL_NAME: str = "card_approval_model"
     MODEL_STAGE: str = "Production"
 
+    # Model Loading - if MODEL_PATH is set, load from local path (embedded in image)
+    # Otherwise, fall back to loading from MLflow at runtime
+    MODEL_PATH: str = ""  # e.g., "/app/models" when embedded in Docker image
+
     # Google Cloud
     GOOGLE_APPLICATION_CREDENTIALS: str = ""
 

@@ -20,8 +20,15 @@ RUN mkdir -p /app/reports
 # Copy the rest of the application
 COPY . .
 
+# Copy model artifacts (downloaded during CI/CD pipeline)
+# This embeds the model into the image for consistent versioning
+COPY models /app/models
+
 # Create logs directory
 RUN mkdir -p /app/logs
+
+# Set environment variable to use embedded model
+ENV MODEL_PATH=/app/models
 
 EXPOSE 8000
 

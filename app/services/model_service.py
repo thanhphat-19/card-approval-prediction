@@ -1,6 +1,8 @@
-"""Model service for loading and managing ML models from MLflow."""
+"""Model service for loading and managing ML models."""
 
+import json
 from functools import lru_cache
+from pathlib import Path
 
 import mlflow
 from loguru import logger
@@ -11,7 +13,7 @@ from app.utils.mlflow_helpers import get_latest_model_version, load_model_with_f
 
 
 class ModelService:
-    """Service for loading and managing ML models from MLflow."""
+    """Service for loading and managing ML models."""
 
     def __init__(self):
         self.settings = get_settings()
@@ -22,14 +24,87 @@ class ModelService:
         self._load_model()
 
     def _load_model(self) -> None:
-        """Load model from MLflow registry."""
+        """Load model from local path or MLflow registry."""
         try:
-            self._setup_credentials()
-            self._fetch_model_version()
-            self._load_model_artifacts()
+            if self.settings.MODEL_PATH:
+                self._load_from_local_path()
+            else:
+                self._load_from_mlflow()
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             raise RuntimeError(f"Model loading failed: {e}") from e
+
+    def _load_from_local_path(self) -> None:
+        """Load model from local path (embedded in Docker image)."""
+        model_path = Path(self.settings.MODEL_PATH)
+        logger.info(f"Loading model from local path: {model_path}")
+
+        # Read metadata
+        metadata_path = model_path / "model_metadata.json"
+        if metadata_path.exists():
+            with open(metadata_path) as f:
+                metadata = json.load(f)
+            self.version = metadata.get("version", "unknown")
+            self.run_id = metadata.get("run_id", "unknown")
+            logger.info(f"Model metadata: v{self.version}, run_id={self.run_id}")
+        else:
+            self.version = "embedded"
+            self.run_id = "local"
+            logger.warning("No model_metadata.json found, using defaults")
+
+        # Find the model directory (MLflow downloads create a subdirectory)
+        model_dir = self._find_model_directory(model_path)
+
+        # Load pyfunc model
+        self.model = mlflow.pyfunc.load_model(str(model_dir))
+
+        # Try loading native model for predict_proba support
+        self.sklearn_model = self._load_native_model(model_dir)
+
+        self._log_model_load_status()
+
+    def _find_model_directory(self, model_path: Path) -> Path:
+        """Find the actual model directory within the downloaded artifacts."""
+        # Check if MLmodel file exists directly
+        if (model_path / "MLmodel").exists():
+            return model_path
+
+        # Look for model subdirectory (MLflow creates model_name/version structure)
+        for subdir in model_path.iterdir():
+            if subdir.is_dir() and (subdir / "MLmodel").exists():
+                return subdir
+            # Check one level deeper
+            for nested in subdir.iterdir():
+                if nested.is_dir() and (nested / "MLmodel").exists():
+                    return nested
+
+        raise FileNotFoundError(f"No MLmodel file found in {model_path}")
+
+    def _load_native_model(self, model_dir: Path) -> object:
+        """Load native model for predict_proba support from local path."""
+        flavor_loaders = [
+            ("xgboost", mlflow.xgboost.load_model),
+            ("lightgbm", mlflow.lightgbm.load_model),
+            ("catboost", mlflow.catboost.load_model),
+            ("sklearn", mlflow.sklearn.load_model),
+        ]
+
+        for flavor_name, loader_func in flavor_loaders:
+            try:
+                model = loader_func(str(model_dir))
+                logger.debug(f"Loaded native model with {flavor_name} flavor")
+                return model
+            except Exception:
+                continue
+
+        logger.warning("Could not load native model for predict_proba")
+        return None
+
+    def _load_from_mlflow(self) -> None:
+        """Load model from MLflow registry (original behavior)."""
+        self._setup_credentials()
+        self._fetch_model_version()
+        self._load_model_artifacts_from_mlflow()
 
     def _setup_credentials(self) -> None:
         """Setup GCS credentials for MLflow artifact access."""
@@ -45,10 +120,10 @@ class ModelService:
             stage=self.settings.MODEL_STAGE,
         )
 
-    def _load_model_artifacts(self) -> None:
-        """Load model artifacts (pyfunc and native model for predict_proba)."""
+    def _load_model_artifacts_from_mlflow(self) -> None:
+        """Load model artifacts from MLflow (pyfunc and native model)."""
         model_uri = f"models:/{self.settings.MODEL_NAME}/{self.version}"
-        logger.info(f"Loading model from: {model_uri} (stage: {self.settings.MODEL_STAGE})")
+        logger.info(f"Loading model from MLflow: {model_uri} (stage: {self.settings.MODEL_STAGE})")
         logger.info(f"Model run ID: {self.run_id}")
 
         # Load pyfunc model
@@ -99,12 +174,8 @@ class ModelService:
             "version": self.version,
             "run_id": self.run_id,
             "loaded": self.model is not None,
+            "source": "local" if self.settings.MODEL_PATH else "mlflow",
         }
-
-    def reload_model(self):
-        """Reload model from MLflow"""
-        logger.info("Reloading model...")
-        self._load_model()
 
 
 @lru_cache(maxsize=1)
