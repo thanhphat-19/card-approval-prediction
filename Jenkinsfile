@@ -168,6 +168,7 @@ pipeline {
                   bash -c "
                     set -e
                     tar xf -
+                    apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
                     pip install --quiet mlflow pandas scikit-learn loguru joblib numpy google-cloud-storage xgboost lightgbm catboost pyyaml
                     python scripts/evaluate_model.py \
                       --threshold ${F1_THRESHOLD} \
