@@ -32,7 +32,7 @@ pipeline {
         IMAGE_NAME    = 'card-approval-api'
 
         // MLflow Configuration
-        MLFLOW_TRACKING_URI = 'http://34.26.212.210/mlflow'
+        MLFLOW_TRACKING_URI = 'http://35.196.35.190/mlflow'
         MODEL_NAME          = 'card_approval_model'
         MODEL_STAGE         = 'Production'
         F1_THRESHOLD        = '0.90'
@@ -147,9 +147,9 @@ pipeline {
 
 
         /* =====================
-           MODEL EVALUATION
+           MODEL EVALUATION & DOWNLOAD
         ====================== */
-        stage('Model Evaluation') {
+        stage('Model Evaluation & Download') {
             when { branch 'main' }
             steps {
                 sh '''
@@ -201,6 +201,42 @@ pipeline {
                         echo "Model Run ID: ${env.MODEL_RUN_ID}"
                     }
                 }
+
+                // Download model artifacts for embedding into Docker image
+                sh '''
+                echo "📥 Downloading model artifacts for Docker image..."
+
+                # Clean up any existing models directory
+                rm -rf models
+
+                # Download model using the download script
+                tar cf - --exclude='.git' --exclude='*.pyc' --exclude='__pycache__' . | \
+                docker run --rm -i \
+                  --network host \
+                  -w /workspace \
+                  -e MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI} \
+                  -e MODEL_NAME=${MODEL_NAME} \
+                  -e MODEL_STAGE=${MODEL_STAGE} \
+                  python:3.11-slim \
+                  bash -c "
+                    set -e
+                    tar xf -
+                    pip install --quiet mlflow google-cloud-storage
+                    python scripts/download_model.py \
+                      --output-dir /workspace/models
+                    # Output the models directory as tar
+                    tar cf - -C /workspace models
+                  " | tar xf -
+
+                # Verify model was downloaded
+                if [ ! -d "models" ] || [ ! -f "models/model_metadata.json" ]; then
+                    echo "ERROR: Model download failed"
+                    exit 1
+                fi
+
+                echo "✅ Model artifacts downloaded successfully"
+                ls -la models/
+                '''
             }
         }
 
@@ -317,12 +353,10 @@ pipeline {
                           --set api.config.modelVersion=\\\$MODEL_VERSION \
                           --timeout 10m \
                           --wait \
-                          --atomic &&
+                          --atomic
 
-                        # Force rolling restart to ensure pods load the latest model
-                        echo 'Triggering rolling restart to load new model...' &&
-                        kubectl rollout restart deployment/card-approval-api -n ${GKE_NAMESPACE} &&
-                        kubectl rollout status deployment/card-approval-api -n ${GKE_NAMESPACE} --timeout=5m
+                        # Note: Rolling restart not needed - model is now embedded in Docker image
+                        # Helm upgrade with new image tag automatically triggers pod replacement
                       "
 
                     rm -rf .tmp-deploy
@@ -334,8 +368,8 @@ pipeline {
 
     post {
         always {
-            // Always clean up secrets and temp files
-            sh 'rm -rf .tmp-deploy .model-info.env || true'
+            // Always clean up secrets, temp files, and downloaded models
+            sh 'rm -rf .tmp-deploy .model-info.env models || true'
             // Clean up dangling Docker images to save disk space
             sh 'docker image prune -f || true'
         }
