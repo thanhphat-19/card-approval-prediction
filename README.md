@@ -66,68 +66,103 @@ This project demonstrates a complete MLOps workflow for a **credit card approval
 card-approval-prediction/
 ├── app/                        # FastAPI application
 │   ├── main.py                 # Application entrypoint
-│   ├── core/                   # Config, logging, metrics
-│   ├── routers/                # API routes (health, predict)
-│   ├── schemas/                # Pydantic models (request/response)
-│   ├── services/               # Business logic (model, preprocessing)
-│   └── utils/                  # Reusable utilities (GCS, MLflow helpers)
-│
-├── data/                       # Data storage (raw and processed)
-│   ├── raw/                    # Raw application and credit records
-│   └── processed/              # Processed data + preprocessing artifacts
-│
-├── models/                     # Trained model artifacts
-│   └── evaluation/             # Evaluation plots and reports
+│   ├── core/                   # Core configurations
+│   │   ├── config.py           # Settings & environment variables
+│   │   ├── logging.py          # Logging configuration
+│   │   └── metrics.py          # Prometheus metrics
+│   ├── routers/                # API route handlers
+│   │   ├── health.py           # Health check endpoints
+│   │   └── predict.py          # Prediction endpoints
+│   ├── schemas/                # Pydantic models
+│   │   ├── request.py          # Request validation schemas
+│   │   └── response.py         # Response models
+│   └── services/               # Business logic
+│       ├── model_service.py    # Model loading & inference
+│       └── preprocessing.py    # Feature preprocessing
 │
 ├── training/                   # ML training pipeline
-│   ├── notebooks/              # EDA and experimentation
-│   ├── scripts/                # Training automation scripts
+│   ├── data/                   # Data storage
+│   │   ├── raw/                # Raw Kaggle dataset (gitignored)
+│   │   │   ├── application_record.csv
+│   │   │   └── credit_record.csv
+│   │   └── processed/          # Processed features + artifacts
+│   │       ├── X_train.csv, X_test.csv
+│   │       ├── y_train.csv, y_test.csv
+│   │       ├── scaler.pkl      # StandardScaler
+│   │       ├── pca.pkl         # PCA transformer
+│   │       └── feature_names.json
+│   ├── scripts/                # Training automation
+│   │   ├── download_data.py    # Download from Kaggle
+│   │   ├── run_preprocessing.py # Feature engineering
+│   │   └── run_training.py     # Train & register models
 │   └── src/                    # Training source code
 │       ├── data/               # Data loading
+│       │   └── data_loader.py
 │       ├── features/           # Feature engineering
-│       ├── models/             # Model training & evaluation
-│       └── utils/              # Training utilities
+│       │   └── feature_engineering.py
+│       ├── models/             # Model training
+│       │   ├── train.py        # Training orchestration
+│       │   └── evaluate.py     # Model evaluation
+│       └── utils/              # Utilities
+│           └── model_configs.py # Model hyperparameters
 │
-├── helm-charts/                # Helm chart deployments
-│   ├── card-approval/          # API stack (API + Postgres + Redis)
-│   ├── card-approval-training/ # MLflow + Postgres for training
-│   └── infrastructure/         # Shared components
+├── scripts/                    # CI/CD helper scripts
+│   ├── evaluate_model.py       # Model quality gate (F1 threshold)
+│   └── download_model.py       # Download from MLflow registry
 │
-├── manifests/                  # Raw Kubernetes manifests
-│   └── ingress.yaml            # Ingress routes (API, Grafana, MLflow)
+├── helm-charts/                # Kubernetes deployments
+│   ├── card-approval/          # API stack
+│   │   ├── Chart.yaml
+│   │   ├── values.yaml         # API configuration
+│   │   └── templates/          # K8s manifests
+│   ├── card-approval-training/ # MLflow training stack
+│   │   ├── Chart.yaml
+│   │   ├── values.yaml         # MLflow configuration
+│   │   └── templates/
+│   └── infrastructure/         # Base charts
+│       ├── postgres/           # PostgreSQL chart
+│       ├── mlflow/             # MLflow server chart
+│       └── redis/              # Redis cache chart
 │
 ├── terraform/                  # GCP infrastructure as code
-│   ├── main.tf                 # GKE, GCS, Artifact Registry, IAM
+│   ├── main.tf                 # Main configuration
+│   │   # - GKE cluster
+│   │   # - GCS bucket for MLflow artifacts
+│   │   # - Artifact Registry for Docker images
+│   │   # - Service accounts & IAM roles
 │   ├── variables.tf            # Input variables
-│   └── outputs.tf              # Resource outputs
+│   ├── outputs.tf              # Resource outputs
+│   ├── terraform.tfvars.example # Configuration template
+│   └── provider.tf             # GCP provider setup
 │
-├── ansible/                    # Configuration management
-│   └── playbooks/              # Jenkins VM setup
+├── ansible/                    # Jenkins deployment automation
+│   ├── playbooks/              # Ansible playbooks
+│   │   ├── deploy_jenkins.yml  # Deploy Jenkins to VM
+│   │   └── configure_jenkins.yml # Configure Jenkins
+│   ├── inventory/              # Host configurations
+│   │   └── hosts.ini
+│   └── group_vars/             # Group variables
 │
-├── tests/                      # Test suites
-│   ├── test_api.py
-│   ├── test_health.py
-│   └── test_predict.py
+├── docs/                       # Project documentation
+│   ├── index.md                # Documentation index
+│   ├── 00_Setup_Guide.md       # Setup & configuration reference
+│   ├── 01_Helm_Deployment.md   # Kubernetes deployment guide
+│   ├── 02_MLflow_Training.md   # Model training guide
+│   ├── 03_CICD_Pipeline.md     # Jenkins CI/CD setup
+│   └── 04_NGINX.md             # NGINX Ingress configuration
 │
-├── scripts/                    # CI/CD utility scripts
-│   └── evaluate_model.py       # Model quality gate for deployments
-│
-├── docs/                       # Documentation (MkDocs)
-│   ├── 00_Setup_Guide.md       # Getting started
-│   ├── 01_Terraform.md         # Infrastructure setup
-│   ├── 03_Helm_Deployment.md   # Kubernetes deployment
-│   ├── 04_MLflow_Training.md   # ML training guide
-│   ├── 05_API_Service.md       # API reference
-│   ├── 06_CICD_Pipeline.md     # CI/CD setup
-│   └── 07_Monitoring.md        # Observability
+├── .github/                    # GitHub configuration
+│   └── workflows/              # GitHub Actions (optional)
 │
 ├── Dockerfile                  # API container image
 ├── Jenkinsfile                 # CI/CD pipeline definition
-├── docker-compose.yml          # Local development services
 ├── pyproject.toml              # Python project configuration
 ├── requirements.txt            # Python dependencies
-├── mkdocs.yml                  # Documentation configuration
-└── sonar-project.properties    # SonarQube configuration
+├── config.env.example          # Configuration template
+├── sonar-project.properties    # SonarQube configuration
+├── .gitignore                  # Git ignore patterns
+├── .pre-commit-config.yaml     # Pre-commit hooks (Black, isort, Flake8)
+└── README.md                   # This file
 ```
 
 ---
@@ -146,17 +181,19 @@ card-approval-prediction/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/card-approval-prediction.git
+git clone https://github.com/thanhphat-19/card-approval-prediction.git
 cd card-approval-prediction
+
+# Configure environment
+cp config.env.example config.env
+# Edit config.env: Set GCP_PROJECT_ID, passwords, service accounts
 
 # Configure Terraform
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-# Edit terraform.tfvars with your project settings
+# Edit terraform.tfvars: Set project_id
 ```
 
-> 📖 **Configuration Reference**: See [docs/08_Configuration.md](docs/08_Configuration.md) for all configuration options.
-
-> 📖 **Full setup guide**: See [docs/00_Setup_Guide.md](docs/00_Setup_Guide.md)
+> 📖 **Full setup guide**: See [docs/00_Setup_Guide.md](docs/00_Setup_Guide.md) for complete setup and configuration reference
 
 
 
@@ -172,7 +209,6 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 | `GET` | `/health/live` | Liveness probe |
 | `GET` | `/metrics` | Prometheus metrics |
 | `POST` | `/api/v1/predict` | Credit approval prediction |
-| `POST` | `/api/v1/reload-model` | Reload model from MLflow |
 | `GET` | `/api/v1/model-info` | Current model information |
 
 ### Example Prediction Request
@@ -225,24 +261,14 @@ curl -X POST "http://localhost:8000/api/v1/predict" \
 
 ## 📚 Documentation
 
-View the full documentation with MkDocs:
-
-```bash
-pip install mkdocs mkdocs-material
-mkdocs serve
-# Open http://localhost:8000
-```
-
 | Document | Description |
 |----------|-------------|
-| [00_Setup_Guide.md](docs/00_Setup_Guide.md) | ⚙️ **Start here!** - Complete setup guide |
-| [01_Terraform.md](docs/01_Terraform.md) | Infrastructure provisioning |
-| [02_terraform_architecture.md](docs/02_terraform_architecture.md) | Architecture design decisions |
-| [03_Helm_Deployment.md](docs/03_Helm_Deployment.md) | Kubernetes deployment guide |
-| [04_MLflow_Training.md](docs/04_MLflow_Training.md) | Model training pipeline |
-| [05_API_Service.md](docs/05_API_Service.md) | API service reference |
-| [06_CICD_Pipeline.md](docs/06_CICD_Pipeline.md) | Jenkins CI/CD setup |
-| [07_Monitoring.md](docs/07_Monitoring.md) | Observability & alerting |
+| [📖 Documentation Index](docs/index.md) | Complete documentation overview |
+| [00_Setup_Guide.md](docs/00_Setup_Guide.md) | ⚙️ **Start here!** - Setup & configuration |
+| [01_Helm_Deployment.md](docs/01_Helm_Deployment.md) | Deploy MLflow, API, and monitoring |
+| [02_MLflow_Training.md](docs/02_MLflow_Training.md) | Train and register models |
+| [03_CICD_Pipeline.md](docs/03_CICD_Pipeline.md) | Jenkins CI/CD pipeline setup |
+| [04_NGINX.md](docs/04_NGINX.md) | NGINX Ingress configuration |
 
 ---
 
