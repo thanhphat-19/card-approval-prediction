@@ -31,15 +31,14 @@ End-to-end **MLOps pipeline** for credit card approval prediction using machine 
 
 ## Overview
 
-This project demonstrates a complete MLOps workflow for a **credit card approval prediction** system, from model training to deployment. It includes:
+This project is a learning-oriented MLOps playground focused on understanding the end-to-end lifecycle of machine learning model development. It includes:
 
-- **ML Training Pipeline**: Automated model training with multiple algorithms (XGBoost, LightGBM, CatBoost)
-- **Model Registry**: MLflow for experiment tracking and model versioning
-- **APIs**: FastAPI service with preprocessing and real-time inference
 - **Infrastructure as Code**: Terraform for GCP resources (GKE, GCS, Artifact Registry)
 - **Kubernetes Deployment**: Helm charts for scalable, reproducible deployments
 - **CI/CD Pipeline**: Jenkins with GitHub webhooks for automated builds and deployments
 - **Monitoring**: Prometheus + Grafana observability stack
+- **MLflow**: MLflow for experiment tracking and model versioning
+- **APIs**: FastAPI service with preprocessing and real-time inference
 
 ---
 
@@ -277,7 +276,7 @@ curl -X POST "http://localhost:8000/api/v1/predict" \
 - [ ] **KServe**: Serverless model inference with autoscaling
 - [ ] **Knative Eventing**: Event-driven model retraining
 - [ ] **Data Pipeline**: Automated data ingestion and preprocessing
-- [ ] **Unit Tests in CI/CD**: Automated testing in Jenkins pipeline
+- [ ] **Unit Tests in CI/CD**: Integrate Unit Test to CI/CD pipeline
 - [ ] **A/B Testing**: Canary deployments for model versions
 - [ ] **Feature Store**: Centralized feature management
 
