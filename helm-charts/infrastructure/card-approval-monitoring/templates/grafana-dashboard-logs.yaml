@@ -171,7 +171,7 @@ data:
         {
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
           "id": 10,
-          "title": "📊 Log Rate by Level",
+          "title": " Log Rate by Level",
           "type": "row"
         },
         {
@@ -240,7 +240,7 @@ data:
         {
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
           "id": 20,
-          "title": "📝 Application Logs",
+          "title": " Application Logs",
           "type": "row"
         },
         {
@@ -270,7 +270,7 @@ data:
         {
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
           "id": 30,
-          "title": "🚨 Error Logs",
+          "title": " Error Logs",
           "type": "row",
           "collapsed": true,
           "panels": [

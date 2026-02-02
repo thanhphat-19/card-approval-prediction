@@ -75,7 +75,7 @@ pipeline {
                     env.IS_MAIN_BRANCH = isMainBranch ? 'true' : 'false'
 
                     if (isMainBranch) {
-                        echo "📦 Main branch detected - will build, push, and deploy"
+                        echo " Main branch detected - will build, push, and deploy"
                     } else {
                         echo "🔍 Feature branch detected - will run tests and SonarQube analysis"
                     }
@@ -235,7 +235,7 @@ pipeline {
                     exit 1
                 fi
 
-                echo "✅ Model artifacts downloaded successfully"
+                echo "   Model artifacts downloaded successfully"
                 ls -la models/
                 '''
             }
@@ -268,7 +268,7 @@ pipeline {
                       --severity HIGH,CRITICAL \
                       --exit-code 0 \
                       --timeout 5m \
-                      ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG} || echo "⚠️ Trivy scan skipped due to resource constraints"
+                      ${REGISTRY}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG} || echo "   Trivy scan skipped due to resource constraints"
                     '''
                 }
             }

@@ -94,7 +94,7 @@ mlflow ui --host 0.0.0.0 --port 5000
 # Open: http://localhost:5000
 ```
 
-## 📊 Complete Pipeline
+##  Complete Pipeline
 
 Run the entire pipeline from scratch:
 
@@ -120,7 +120,7 @@ Run EDA to understand the data:
 python training/scripts/run_eda.py
 ```
 
-## 📝 Key Files
+##  Key Files
 
 | File | Description |
 |------|-------------|

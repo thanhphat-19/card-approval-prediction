@@ -192,7 +192,7 @@ curl -X POST http://localhost:8000/api/v1/predict \
 curl -f http://localhost:8000/health || echo "Health check failed"
 ```
 
-## 📊 Preprocessing Pipeline
+##  Preprocessing Pipeline
 
 The API automatically preprocesses input data:
 
@@ -236,7 +236,7 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-## 📝 Key Files
+##  Key Files
 
 | File | Description |
 |------|-------------|
@@ -247,7 +247,7 @@ docker-compose up -d
 | `core/config.py` | Configuration management |
 | `schemas/prediction.py` | Request/response schemas |
 
-## 🚨 Troubleshooting
+##  Troubleshooting
 
 ### **Model not loading**
 ```bash

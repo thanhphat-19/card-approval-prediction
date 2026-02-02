@@ -53,7 +53,7 @@ def download_model(
     run_id = latest.run_id
     source = latest.source
 
-    print(f"📦 Found model: {model_name} v{version} ({stage})", file=sys.stderr)
+    print(f" Found model: {model_name} v{version} ({stage})", file=sys.stderr)
     print(f"   Run ID: {run_id}", file=sys.stderr)
     print(f"   Source: {source}", file=sys.stderr)
 
@@ -65,7 +65,7 @@ def download_model(
 
     # Download model artifacts
     model_uri = f"models:/{model_name}/{version}"
-    print(f"\n⬇️  Downloading model artifacts to: {output_path}", file=sys.stderr)
+    print(f"\n   Downloading model artifacts to: {output_path}", file=sys.stderr)
 
     # Download the model using mlflow
     local_path = mlflow.artifacts.download_artifacts(
@@ -73,10 +73,10 @@ def download_model(
         dst_path=str(output_path),
     )
 
-    print(f"✅ Model downloaded to: {local_path}", file=sys.stderr)
+    print(f"   Model downloaded to: {local_path}", file=sys.stderr)
 
     # Also download preprocessing artifacts from the same run
-    print(f"\n⬇️  Downloading preprocessing artifacts from run: {run_id}", file=sys.stderr)
+    print(f"\n   Downloading preprocessing artifacts from run: {run_id}", file=sys.stderr)
     try:
         # Download preprocessing artifacts
         preprocessing_artifacts = mlflow.artifacts.download_artifacts(
@@ -84,7 +84,7 @@ def download_model(
             artifact_path="preprocessors",
             dst_path=str(output_path),
         )
-        print(f"✅ Preprocessing artifacts downloaded to: {preprocessing_artifacts}", file=sys.stderr)
+        print(f"   Preprocessing artifacts downloaded to: {preprocessing_artifacts}", file=sys.stderr)
 
         # Verify files exist
         preprocessing_path = Path(preprocessing_artifacts)
@@ -97,7 +97,7 @@ def download_model(
                 print(f"   ✗ {file} NOT FOUND", file=sys.stderr)
 
     except Exception as e:
-        print(f"⚠️  Could not download preprocessing artifacts: {e}", file=sys.stderr)
+        print(f"    Could not download preprocessing artifacts: {e}", file=sys.stderr)
         print(f"   Error type: {type(e).__name__}", file=sys.stderr)
         import traceback
 
@@ -116,7 +116,7 @@ def download_model(
     metadata_path = output_path / "model_metadata.json"
     with open(metadata_path, "w") as f:
         json.dump(metadata, f, indent=2)
-    print(f"📝 Metadata saved to: {metadata_path}", file=sys.stderr)
+    print(f" Metadata saved to: {metadata_path}", file=sys.stderr)
 
     return metadata
 
@@ -157,7 +157,7 @@ def main():
     args = parser.parse_args()
 
     if not args.tracking_uri:
-        print("❌ ERROR: MLFLOW_TRACKING_URI not set", file=sys.stderr)
+        print("    ERROR: MLFLOW_TRACKING_URI not set", file=sys.stderr)
         sys.exit(1)
 
     print("=" * 60, file=sys.stderr)
@@ -183,10 +183,10 @@ def main():
             with open(env_path, "w") as f:
                 f.write(f"MODEL_VERSION={metadata['version']}\n")
                 f.write(f"MODEL_RUN_ID={metadata['run_id']}\n")
-            print(f"📝 Environment file written to: {env_path}", file=sys.stderr)
+            print(f" Environment file written to: {env_path}", file=sys.stderr)
 
         print("\n" + "=" * 60, file=sys.stderr)
-        print("✅ MODEL DOWNLOAD COMPLETE", file=sys.stderr)
+        print("   MODEL DOWNLOAD COMPLETE", file=sys.stderr)
         print("=" * 60, file=sys.stderr)
         print(f"   Version: {metadata['version']}", file=sys.stderr)
         print(f"   Run ID: {metadata['run_id']}", file=sys.stderr)
@@ -195,7 +195,7 @@ def main():
         sys.exit(0)
 
     except Exception as e:
-        print(f"\n❌ ERROR: {e}", file=sys.stderr)
+        print(f"\n    ERROR: {e}", file=sys.stderr)
         sys.exit(1)
 
 

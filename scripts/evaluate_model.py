@@ -49,7 +49,7 @@ def load_mlflow_model(tracking_uri: str, model_name: str, stage: str):
     version = latest.version
     run_id = latest.run_id
 
-    print(f"📦 Loading model: {model_name} v{version} ({stage})")
+    print(f" Loading model: {model_name} v{version} ({stage})")
     print(f"   Run ID: {run_id}")
 
     # Load model using native flavor for predict_proba support
@@ -100,7 +100,7 @@ def load_test_data(data_dir: str):
     X_test = pd.read_csv(X_test_path)
     y_test = pd.read_csv(y_test_path).squeeze()
 
-    print(f"📊 Loaded test data: {len(X_test)} samples")
+    print(f" Loaded test data: {len(X_test)} samples")
 
     return X_test, y_test
 
@@ -196,12 +196,12 @@ def main():
         X_test, y_test = load_test_data(args.data_dir)
 
         # Evaluate using shared metrics
-        print("\n📈 Evaluating model...")
+        print("\n  Evaluating model...")
         metrics = evaluate_model(model, X_test, y_test)
 
         # Print results
         print("\n" + "=" * 60)
-        print("📊 EVALUATION RESULTS")
+        print(" EVALUATION RESULTS")
         print("=" * 60)
         for metric_name, value in metrics.items():
             status = " " if metric_name == "f1_score" and value >= args.threshold else "  "
@@ -224,7 +224,7 @@ def main():
                     f.write(f"MODEL_VERSION={version}\n")
                     f.write(f"MODEL_RUN_ID={run_id}\n")
                     f.write(f"MODEL_F1_SCORE={f1:.4f}\n")
-                print(f"📝 Model info written to: {output_file}")
+                print(f" Model info written to: {output_file}")
 
             sys.exit(0)
         else:

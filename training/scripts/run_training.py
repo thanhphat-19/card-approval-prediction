@@ -273,7 +273,7 @@ def main():
                 logger.info(f"🎯 Run ID: {best_run_id}")
 
             except Exception as e:
-                logger.warning(f"⚠️  Auto-registration failed: {e}")
+                logger.warning(f"    Auto-registration failed: {e}")
                 logger.info("You can manually register using:")
                 logger.info(
                     f"  python scripts/register_model.py --run-id {trainer.best_model_run_id} --model-name {args.model_name} --stage Production"  # noqa: E501
