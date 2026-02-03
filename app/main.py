@@ -9,6 +9,7 @@ from loguru import logger
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.core.metrics import ACTIVE_REQUESTS, REQUEST_DURATION, metrics_endpoint, track_request_metrics
+from app.core.tracing import setup_tracing
 from app.routers import health, predict
 
 # Setup
@@ -47,6 +48,9 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+# Setup distributed tracing (OpenTelemetry)
+setup_tracing(app)
 
 # CORS middleware - configure allowed origins based on environment
 # In production, set CORS_ORIGINS environment variable to restrict origins

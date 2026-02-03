@@ -11,6 +11,7 @@ import pandas as pd
 from loguru import logger
 
 from app.core.config import get_settings
+from app.core.tracing import get_tracer
 
 
 class PreprocessingService:
@@ -75,25 +76,40 @@ class PreprocessingService:
 
     def preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
         """Preprocess input for model prediction: encode → align → scale → PCA"""
-        # Drop ID column
-        if "ID" in df.columns:
-            df = df.drop("ID", axis=1)
+        tracer = get_tracer()
 
-        # One-hot encode
-        df_encoded = pd.get_dummies(df.copy(), drop_first=True)
+        with tracer.start_as_current_span("preprocessing") as parent_span:
+            parent_span.set_attribute("feature_count", len(self.feature_names))
+            parent_span.set_attribute("input_rows", len(df))
 
-        # Align features
-        df_aligned = self.align_features(df_encoded, self.feature_names)
+            # Drop ID column
+            if "ID" in df.columns:
+                df = df.drop("ID", axis=1)
 
-        # Scale
-        df_scaled = self.scaler.transform(df_aligned)
+            # One-hot encode
+            with tracer.start_as_current_span("preprocessing.encode") as span:
+                df_encoded = pd.get_dummies(df.copy(), drop_first=True)
+                span.set_attribute("encoded_features", len(df_encoded.columns))
 
-        # PCA
-        df_pca = self.pca.transform(df_scaled)
+            # Align features
+            with tracer.start_as_current_span("preprocessing.align") as span:
+                df_aligned = self.align_features(df_encoded, self.feature_names)
+                span.set_attribute("aligned_features", len(df_aligned.columns))
 
-        # Return as DataFrame with PC column names
-        pc_columns = [f"PC{i+1}" for i in range(df_pca.shape[1])]
-        return pd.DataFrame(df_pca, columns=pc_columns, index=df.index)
+            # Scale
+            with tracer.start_as_current_span("preprocessing.scale") as span:
+                df_scaled = self.scaler.transform(df_aligned)
+                span.set_attribute("scaler_type", "StandardScaler")
+
+            # PCA
+            with tracer.start_as_current_span("preprocessing.pca") as span:
+                df_pca = self.pca.transform(df_scaled)
+                span.set_attribute("n_components", df_pca.shape[1])
+
+            # Return as DataFrame with PC column names
+            pc_columns = [f"PC{i+1}" for i in range(df_pca.shape[1])]
+            parent_span.set_attribute("output_features", len(pc_columns))
+            return pd.DataFrame(df_pca, columns=pc_columns, index=df.index)
 
 
 @lru_cache(maxsize=1)

@@ -9,6 +9,20 @@ from app.core.config import get_settings
 settings = get_settings()
 
 
+def get_trace_context() -> dict:
+    """Get current trace context for log correlation."""
+    try:
+        from app.core.tracing import get_current_span_id, get_current_trace_id
+
+        trace_id = get_current_trace_id()
+        span_id = get_current_span_id()
+        if trace_id:
+            return {"trace_id": trace_id, "span_id": span_id}
+    except Exception:
+        pass
+    return {}
+
+
 def json_serializer(record):
     """Serialize log record to JSON for Loki/Alloy parsing"""
     subset = {
@@ -25,6 +39,11 @@ def json_serializer(record):
     # Add extra fields
     if record["extra"]:
         subset["extra"] = record["extra"]
+    # Add trace context for correlation with Tempo
+    trace_ctx = get_trace_context()
+    if trace_ctx:
+        subset["trace_id"] = trace_ctx.get("trace_id")
+        subset["span_id"] = trace_ctx.get("span_id")
     return json.dumps(subset)
 
 

@@ -32,6 +32,13 @@ dependencies = [
     "python-multipart==0.0.6",
     "prometheus-client==0.19.0",
     "setuptools<81",
+    # OpenTelemetry for distributed tracing
+    "opentelemetry-api==1.22.0",
+    "opentelemetry-sdk==1.22.0",
+    "opentelemetry-instrumentation-fastapi==0.43b0",
+    "opentelemetry-instrumentation-requests==0.43b0",
+    "opentelemetry-instrumentation-logging==0.43b0",
+    "opentelemetry-exporter-otlp==1.22.0",
 ]
 
 [tool.black]

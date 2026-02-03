@@ -29,6 +29,14 @@ config:
   modelName: "card_approval_model"
   modelStage: "Production"
   modelVersion: "latest"
+  modelPath: ""  # Empty = load from MLflow at runtime; "/app/models" = load from embedded model
+
+# OpenTelemetry Tracing
+tracing:
+  enabled: false
+  serviceName: "card-approval-api"
+  exporterEndpoint: ""
+  samplingRate: "1.0"
 
 # MLflow connection
 mlflow:

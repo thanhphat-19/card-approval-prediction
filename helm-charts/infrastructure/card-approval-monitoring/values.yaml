@@ -151,7 +151,7 @@ kube-prometheus:
           limits:
             cpu: 50m
             memory: 64Mi
-    # Loki datasource
+    # Additional datasources (Loki, Tempo)
     additionalDataSources:
       - name: Loki
         type: loki
@@ -161,6 +161,29 @@ kube-prometheus:
         jsonData:
           timeout: 60
           maxLines: 1000
+          derivedFields:
+            - datasourceUid: tempo
+              matcherRegex: "trace_id=(\\w+)"
+              name: TraceID
+              url: "$${__value.raw}"
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        url: http://tempo.monitoring.svc.cluster.local:3200
+        access: proxy
+        isDefault: false
+        jsonData:
+          httpMethod: GET
+          tracesToLogs:
+            datasourceUid: loki
+            tags: ['job', 'namespace', 'pod']
+            mappedTags: [{ key: 'service.name', value: 'app' }]
+            mapTagNamesEnabled: true
+            filterByTraceID: true
+          serviceMap:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
 
   # Alert Manager
   alertmanager:

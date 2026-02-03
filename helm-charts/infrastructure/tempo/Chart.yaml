@@ -1,0 +1,11 @@
+apiVersion: v2
+name: tempo
+description: Grafana Tempo for distributed tracing
+type: application
+version: 1.0.0
+appVersion: "2.3.1"
+
+dependencies:
+  - name: tempo
+    version: "1.7.1"
+    repository: "https://grafana.github.io/helm-charts"
