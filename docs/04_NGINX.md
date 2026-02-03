@@ -185,6 +185,47 @@ curl -X POST "http://${NGINX_IP}/api/v1/predict" \
 
 ---
 
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **No LoadBalancer IP** | Pending state | Wait 2-5 minutes for GCP to provision |
+| **Connection refused** | Service not running | Check pods are running |
+| **404 Not Found** | Ingress not configured | Apply `kubectl apply -f manifests/ingress.yaml` |
+| **502 Bad Gateway** | Backend service down | Check pod logs |
+| **503 Service Unavailable** | No ready endpoints | Verify pod is Ready |
+
+### Check Ingress Configuration
+
+```bash
+# View all ingress resources
+kubectl get ingress -A
+
+# Describe ingress for details
+kubectl describe ingress <ingress-name> -n <namespace>
+
+# Check ingress controller logs
+kubectl logs -f deployment/nginx-ingress-ingress-nginx-controller -n ingress-nginx
+```
+
+### Service Connectivity Test
+
+```bash
+# Test from inside cluster
+kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
+  curl http://card-approval-api.card-approval/health
+
+# Test MLflow
+kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
+  curl http://card-approval-training-mlflow.card-approval-training:5000/health
+```
+
+---
+
 ## Next Steps
 
 1. **[View Traces](05_Tracing.md)** - See request traces in Grafana

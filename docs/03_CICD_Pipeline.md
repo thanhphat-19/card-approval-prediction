@@ -246,6 +246,33 @@ The pipeline includes a **Model Evaluation & Download** stage that:
 5. Downloads model artifacts for embedding into Docker image
 6. Extracts model version and run ID for deployment tracking
 
+### Model Loading Strategy
+
+**CI/CD Pipeline (Embedded Model):**
+- Pipeline downloads model from MLflow and embeds it into Docker image at `/app/models`
+- Sets `MODEL_PATH=/app/models` in Dockerfile
+- API loads model from embedded path at startup
+- **Advantage:** Faster startup, no MLflow dependency at runtime
+- **Disadvantage:** Requires rebuild to update model
+
+**Manual Deployment (Runtime Loading):**
+- No model embedded in Docker image
+- Set `api.config.modelPath=""` in Helm values
+- API loads model from MLflow registry at startup
+- **Advantage:** No rebuild needed, always uses latest Production model
+- **Disadvantage:** Slower startup, requires MLflow availability
+
+> **⚠️ Important:** If deploying manually without CI/CD, ensure you set `--set api.config.modelPath=""` to enable runtime MLflow loading. Otherwise, the API will expect an embedded model and fail to start.
+
+**Manual Deployment Example:**
+```bash
+helm upgrade card-approval helm-charts/card-approval \
+  -n card-approval \
+  --set api.config.modelPath="" \  # ← Empty = load from MLflow
+  --set api.image.repository="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}/${IMAGE_NAME}" \
+  --set api.postgres.password="${POSTGRES_APP_PASSWORD}" \
+  --set postgres.password="${POSTGRES_APP_PASSWORD}"
+```
 
 ---
 

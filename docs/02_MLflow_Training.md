@@ -2,15 +2,40 @@
 
 Train credit card approval models with MLflow tracking.
 
+> **Prerequisites:**
+> - MLflow deployed and running (see [01_Helm_Deployment.md](01_Helm_Deployment.md))
+> - Python 3.11 environment with dependencies installed
+> - Kaggle API credentials configured
+
 ---
 
-## Prerequisites
+## Overview
 
-Before starting, ensure you have:
-1. Completed the [Helm Deployment Guide](01_Helm_Deployment.md) - MLflow must be deployed and running
-2. MLflow accessible via port-forward or ingress
-3. GCS bucket configured in Helm deployment for artifact storage
-4. Kaggle API credentials configured
+The training pipeline:
+1. Downloads credit card data from Kaggle
+2. Preprocesses features (encoding, scaling, PCA)
+3. Trains multiple models (XGBoost, LightGBM, CatBoost, etc.)
+4. Logs metrics and artifacts to MLflow
+5. Registers best model to MLflow Model Registry
+
+---
+
+## Quick Start
+
+```bash
+# Complete training pipeline in 3 commands:
+cd card-approval-prediction
+
+# 1. Download data
+python training/scripts/download_data.py
+
+# 2. Preprocess
+python training/scripts/run_preprocessing.py
+
+# 3. Train and register (MLflow must be accessible)
+export MLFLOW_TRACKING_URI=http://localhost:5000
+python training/scripts/run_training.py
+```
 
 ---
 
@@ -108,3 +133,8 @@ Open http://localhost:5000
 - **Models**: Check `card_approval_model`
 
 ---
+
+## Next Steps
+
+1. **[CI/CD Pipeline](03_CICD_Pipeline.md)** - Deploy model via Jenkins
+2. **[Access Services](04_NGINX.md)** - Access API via LoadBalancer

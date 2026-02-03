@@ -37,14 +37,52 @@ Complete guide to setup and configure the Card Approval Prediction MLOps project
 
 ## Prerequisites
 
-**Required Tools:**
-- GCP Account with billing enabled
-- `gcloud` CLI installed and authenticated
-- `kubectl` installed
-- `helm` v3+ installed
-- `terraform` v1.6+ installed
-- `ansible` installed (for Jenkins deployment)
-- `docker` installed
+### Required Tools
+
+| Tool | Version | Installation |
+|------|---------|--------------|
+| `gcloud` CLI | Latest | [Install Guide](https://cloud.google.com/sdk/docs/install) |
+| `kubectl` | 1.28+ | `gcloud components install kubectl` |
+| `helm` | 3.12+ | [Install Guide](https://helm.sh/docs/intro/install/) |
+| `terraform` | 1.6+ | [Install Guide](https://developer.hashicorp.com/terraform/install) |
+| `docker` | 24+ | [Install Guide](https://docs.docker.com/engine/install/) |
+| `ansible` | 2.15+ | `pip install ansible` |
+| `python` | 3.11 | [Install Guide](https://www.python.org/downloads/) |
+
+### Verify Installation
+
+```bash
+# Check all tools are installed
+gcloud version
+kubectl version --client
+helm version
+terraform version
+docker --version
+ansible --version
+python --version
+```
+
+### GCP Project Setup
+
+```bash
+# Set your project ID
+export PROJECT_ID="your-project-id"
+
+# Authenticate
+gcloud auth login
+gcloud auth application-default login
+
+# Set project
+gcloud config set project $PROJECT_ID
+
+# Enable required APIs
+gcloud services enable \
+  container.googleapis.com \
+  artifactregistry.googleapis.com \
+  storage.googleapis.com \
+  iam.googleapis.com \
+  compute.googleapis.com
+```
 
 ---
 

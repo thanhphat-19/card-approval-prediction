@@ -137,14 +137,26 @@ helm upgrade --install tempo helm-charts/infrastructure/tempo \
 
 ### Configure Grafana Datasource
 
-The Tempo datasource is **auto-configured** when you deploy the monitoring stack. If needed, manually add:
+The Tempo datasource is **auto-configured** when you deploy the monitoring stack.
+
+**Important:** The datasource is provisioned in `helm-charts/infrastructure/card-approval-monitoring/values.yaml` with the correct URL: `http://tempo.monitoring.svc.cluster.local:3200`
+
+> **⚠️ Common Mistake:** Do NOT use port 3100 (Prometheus metrics port). Always use port **3200** for Tempo HTTP API.
+
+If you need to manually add the datasource:
 
 1. Go to **Configuration** → **Data Sources**
 2. Click **Add data source** → Select **Tempo**
 3. Configure:
    - **Name:** `Tempo`
-   - **URL:** `http://tempo.monitoring.svc.cluster.local:3100`
+   - **URL:** `http://tempo.monitoring.svc.cluster.local:3200` ← **Port 3200!**
+   - **HTTP Method:** `GET`
 4. Click **Save & Test**
+
+**Tempo Ports Explained:**
+- **Port 3200** - HTTP API (for Grafana queries) ✅
+- **Port 4317** - OTLP gRPC (for trace ingestion from apps)
+- **Port 3100** - Prometheus metrics (NOT for trace queries) ❌
 
 ---
 
@@ -322,3 +334,162 @@ opentelemetry-instrumentation-requests==0.43b0
 opentelemetry-instrumentation-logging==0.43b0
 opentelemetry-exporter-otlp==1.22.0
 ```
+
+---
+
+## Common Issues & Troubleshooting
+
+### Issue: Tempo Datasource Shows "Bad Gateway" Error
+
+**Symptoms:**
+- Tempo appears in Grafana datasources
+- Clicking "Explore" → "Tempo" shows: `Error (Bad Gateway)`
+- Service name dropdown shows "no option found"
+
+**Root Cause:**
+Wrong port configured in datasource URL.
+
+**Solution:**
+1. Check current datasource configuration:
+```bash
+source config.env
+curl -s -u "admin:${GRAFANA_ADMIN_PASSWORD}" \
+  "http://<NGINX_IP>/grafana/api/datasources" | jq '.[] | select(.name=="Tempo") | .url'
+```
+
+2. If URL shows port 3100, update `helm-charts/infrastructure/card-approval-monitoring/values.yaml`:
+```yaml
+- name: Tempo
+  type: tempo
+  uid: tempo
+  url: http://tempo.monitoring.svc.cluster.local:3200  # ← Change from 3100 to 3200
+```
+
+3. Upgrade and restart:
+```bash
+helm upgrade monitoring helm-charts/infrastructure/card-approval-monitoring \
+  -n monitoring \
+  --set kube-prometheus.grafana.adminPassword="${GRAFANA_ADMIN_PASSWORD}"
+
+kubectl rollout restart deployment/monitoring-grafana -n monitoring
+```
+
+---
+
+### Issue: Port 3200 Not Exposed in Tempo Service
+
+**Symptoms:**
+- Tempo pod is running
+- Grafana cannot reach `http://tempo.monitoring:3200`
+- `kubectl describe svc tempo -n monitoring` doesn't show port 3200
+
+**Root Cause:**
+The Tempo Helm chart may not expose the HTTP API port by default.
+
+**Solution:**
+```bash
+# Patch the service to expose port 3200
+kubectl patch svc tempo -n monitoring --type='json' -p='[
+  {
+    "op": "add",
+    "path": "/spec/ports/-",
+    "value": {
+      "name": "tempo-http",
+      "port": 3200,
+      "targetPort": 3200,
+      "protocol": "TCP"
+    }
+  }
+]'
+
+# Verify the port is exposed
+kubectl get svc tempo -n monitoring -o jsonpath='{.spec.ports[*].name}' | grep tempo-http
+
+# Test connectivity from Grafana
+kubectl exec -n monitoring $(kubectl get pods -n monitoring -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}') -c grafana -- \
+  wget -qO- "http://tempo.monitoring.svc.cluster.local:3200/ready"
+```
+
+---
+
+### Issue: No Traces Appearing in Tempo
+
+**Symptoms:**
+- Tempo datasource works
+- Service name dropdown is empty
+- API is running but no traces found
+
+**Diagnosis:**
+```bash
+# 1. Check if tracing is enabled in API
+kubectl describe pod -n card-approval -l app.kubernetes.io/name=api | grep -A 5 "OTEL"
+
+# Should show:
+# OTEL_ENABLED: true
+# OTEL_SERVICE_NAME: card-approval-api
+# OTEL_EXPORTER_ENDPOINT: http://tempo.monitoring:4317
+# OTEL_SAMPLING_RATE: 1.0
+
+# 2. Check API logs for tracing initialization
+kubectl logs -n card-approval -l app.kubernetes.io/name=api | grep -i "tracing\|otel"
+
+# Should show:
+# INFO | Initializing OpenTelemetry tracing: service=card-approval-api
+# INFO | OTLP exporter configured: http://tempo.monitoring:4317
+# INFO | Tracing initialized: sampling_rate=100.0%
+
+# 3. Check if traces are reaching Tempo
+kubectl exec -n monitoring tempo-0 -- wget -qO- \
+  "http://localhost:3200/api/search/tag/service.name/values"
+
+# Should return: {"tagValues":["card-approval-api"]}
+```
+
+**Solution if tracing not enabled:**
+```bash
+# Upgrade API with tracing enabled
+source config.env
+helm upgrade card-approval helm-charts/card-approval \
+  -n card-approval \
+  --set api.tracing.enabled=true \
+  --set api.tracing.exporterEndpoint="http://tempo.monitoring:4317" \
+  --set api.tracing.samplingRate="1.0" \
+  --set api.image.repository="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}/${IMAGE_NAME}" \
+  --set api.postgres.password="${POSTGRES_APP_PASSWORD}" \
+  --set postgres.password="${POSTGRES_APP_PASSWORD}"
+
+# Restart API
+kubectl rollout restart deployment/card-approval-api -n card-approval
+```
+
+---
+
+### Issue: Grafana Doesn't Reload Datasource Changes
+
+**Symptoms:**
+- Updated monitoring Helm chart
+- Tempo datasource still shows old configuration
+
+**Solution:**
+Always restart Grafana after updating the monitoring stack:
+```bash
+kubectl rollout restart deployment/monitoring-grafana -n monitoring
+
+# Wait for new pod to be ready
+kubectl get pods -n monitoring -l app.kubernetes.io/name=grafana -w
+```
+
+---
+
+### Verification Checklist
+
+Use this checklist after deploying tracing:
+
+- [ ] Tempo pod is running: `kubectl get pods -n monitoring -l app.kubernetes.io/name=tempo`
+- [ ] Port 3200 is exposed: `kubectl get svc tempo -n monitoring -o jsonpath='{.spec.ports[*].name}' | grep tempo-http`
+- [ ] Grafana has Tempo datasource: `curl -s -u "admin:${GRAFANA_ADMIN_PASSWORD}" "http://<IP>/grafana/api/datasources" | jq '.[].name'`
+- [ ] Datasource uses port 3200: `curl -s -u "admin:${GRAFANA_ADMIN_PASSWORD}" "http://<IP>/grafana/api/datasources" | jq '.[] | select(.name=="Tempo") | .url'`
+- [ ] API has tracing enabled: `kubectl describe pod -n card-approval -l app.kubernetes.io/name=api | grep OTEL_ENABLED`
+- [ ] API logs show tracing init: `kubectl logs -n card-approval -l app.kubernetes.io/name=api | grep "Tracing initialized"`
+- [ ] Traces exist in Tempo: `kubectl exec -n monitoring tempo-0 -- wget -qO- "http://localhost:3200/api/search/tag/service.name/values"`
+- [ ] Grafana can query Tempo: Navigate to Explore → Tempo → Search for service name
