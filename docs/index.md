@@ -20,11 +20,12 @@ cp config.example.env config.env  # Edit with your GCP project ID
 
 | Doc | Description |
 |-----|-------------|
-| [00_Setup_Guide](./00_Setup_Guide.md) | ⚙️ **Start here!** Setup & configuration reference |
-| [01_Helm_Deployment](./01_Helm_Deployment.md) | Deploy MLflow, API, and monitoring to Kubernetes |
+| [00_Setup_Guide](./00_Setup_Guide.md) | ⚙️ **Start here!** Terraform, Workload Identity, Docker image |
+| [01_Helm_Deployment](./01_Helm_Deployment.md) | Deploy NGINX, MLflow, Monitoring, Tempo |
 | [02_MLflow_Training](./02_MLflow_Training.md) | Train and register models with MLflow |
-| [03_CICD_Pipeline](./03_CICD_Pipeline.md) | Jenkins CI/CD pipeline setup |
-| [04_NGINX](./04_NGINX.md) | NGINX Ingress configuration |
+| [03_CICD_Pipeline](./03_CICD_Pipeline.md) | Jenkins CI/CD pipeline (deploys the API) |
+| [04_NGINX](./04_NGINX.md) | Access services via LoadBalancer |
+| [05_Tracing](./05_Tracing.md) | View distributed traces in Grafana |
 
 ---
 

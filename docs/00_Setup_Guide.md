@@ -4,6 +4,37 @@ Complete guide to setup and configure the Card Approval Prediction MLOps project
 
 ---
 
+## Deployment Flow Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PROJECT DEPLOYMENT FLOW                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. Setup & Config (this doc)                                               │
+│         ↓                                                                   │
+│  2. Terraform → GKE, GCS, Artifact Registry                                │
+│         ↓                                                                   │
+│  3. Helm Deployments (01_Helm_Deployment.md)                               │
+│      ├── NGINX Ingress                                                      │
+│      ├── MLflow Training Stack                                              │
+│      ├── Monitoring (Prometheus, Grafana, Loki)                            │
+│      └── Tempo (Distributed Tracing)                                       │
+│         ↓                                                                   │
+│  4. Train Model (02_MLflow_Training.md)                                    │
+│         ↓                                                                   │
+│  5. CI/CD Pipeline (03_CICD_Pipeline.md)                                   │
+│      └── Git Push → Jenkins → Build → Deploy API                           │
+│         ↓                                                                   │
+│  6. Access Services (04_NGINX.md)                                          │
+│         ↓                                                                   │
+│  7. View Traces (05_Tracing.md)                                            │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Prerequisites
 
 **Required Tools:**
@@ -109,13 +140,47 @@ kubectl get nodes
 
 ---
 
-## Step 5: Build & Push Docker Image
+## Step 5: Setup Workload Identity
+
+Workload Identity allows Kubernetes pods to access GCP services without service account keys.
+
+```bash
+source config.env
+
+# 1. Bind K8s Service Accounts to GCP Service Account
+# For MLflow (card-approval-training namespace)
+gcloud iam service-accounts add-iam-policy-binding ${GCP_MLFLOW_SERVICE_ACCOUNT} \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="serviceAccount:${GCP_PROJECT_ID}.svc.id.goog[card-approval-training/card-approval-training-mlflow-sa]" \
+  --project=${GCP_PROJECT_ID}
+
+# For API (card-approval namespace)
+gcloud iam service-accounts add-iam-policy-binding ${GCP_MLFLOW_SERVICE_ACCOUNT} \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="serviceAccount:${GCP_PROJECT_ID}.svc.id.goog[card-approval/card-approval-api-sa]" \
+  --project=${GCP_PROJECT_ID}
+
+# For Tempo (monitoring namespace)
+gcloud iam service-accounts add-iam-policy-binding ${GCP_MLFLOW_SERVICE_ACCOUNT} \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="serviceAccount:${GCP_PROJECT_ID}.svc.id.goog[monitoring/tempo-sa]" \
+  --project=${GCP_PROJECT_ID}
+
+# 2. Grant bucket-level permissions (required for Tempo)
+gcloud storage buckets add-iam-policy-binding gs://${GCS_BUCKET_NAME} \
+  --member="serviceAccount:${GCP_MLFLOW_SERVICE_ACCOUNT}" \
+  --role="roles/storage.legacyBucketReader"
+```
+
+---
+
+## Step 6: Build & Push Docker Image
 
 ```bash
 source config.env
 
 # Configure Docker for Artifact Registry
-gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev
+gcloud auth configure-docker ${DOCKER_REGISTRY}
 
 # Build and push
 docker build -t card-approval-api:latest .
@@ -181,7 +246,8 @@ mlflow:
 
 ## Next Steps
 
-1. **[Helm Deployment](01_Helm_Deployment.md)** - Deploy all services to Kubernetes
-2. **[Model Training](02_MLflow_Training.md)** - Train and register models
-3. **[CI/CD Pipeline](03_CICD_Pipeline.md)** - Setup Jenkins automation
-4. **[Monitoring](05_Monitoring.md)** - Configure Prometheus & Grafana
+1. **[Helm Deployment](01_Helm_Deployment.md)** - Deploy NGINX, MLflow, Monitoring, Tempo
+2. **[Model Training](02_MLflow_Training.md)** - Train and register models to MLflow
+3. **[CI/CD Pipeline](03_CICD_Pipeline.md)** - Setup Jenkins for automated deployments
+4. **[NGINX Access](04_NGINX.md)** - Access all services via LoadBalancer
+5. **[Distributed Tracing](05_Tracing.md)** - View traces in Grafana
