@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     # CORS - comma-separated list of allowed origins (use "*" for development only)
     CORS_ORIGINS: str = "*"
 
+    # OpenTelemetry Tracing
+    OTEL_ENABLED: bool = True
+    OTEL_SERVICE_NAME: str = "card-approval-api"
+    OTEL_EXPORTER_ENDPOINT: str = ""  # e.g., "http://tempo:4317" or "http://tempo.monitoring:4317"
+    OTEL_SAMPLING_RATE: float = 1.0  # 1.0 = 100%, 0.1 = 10%
+
     class Config:
         env_file = ".env"
         case_sensitive = True

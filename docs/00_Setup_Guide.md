@@ -2,11 +2,11 @@
 
 Complete guide to setup and configure the Card Approval Prediction MLOps project.
 
----
+
 
 ## Prerequisites
 
-**Required Tools:**
+### Required Tools:
 - GCP Account with billing enabled
 - `gcloud` CLI installed and authenticated
 - `kubectl` installed
@@ -14,6 +14,41 @@ Complete guide to setup and configure the Card Approval Prediction MLOps project
 - `terraform` v1.6+ installed
 - `ansible` installed (for Jenkins deployment)
 - `docker` installed
+
+### Verify Installation
+
+```bash
+# Check all tools are installed
+gcloud version
+kubectl version --client
+helm version
+terraform version
+docker --version
+ansible --version
+python --version
+```
+
+### GCP Project Setup
+
+```bash
+# Set your project ID
+export PROJECT_ID="your-project-id"
+
+# Authenticate
+gcloud auth login
+gcloud auth application-default login
+
+# Set project
+gcloud config set project $PROJECT_ID
+
+# Enable required APIs
+gcloud services enable \
+  container.googleapis.com \
+  artifactregistry.googleapis.com \
+  storage.googleapis.com \
+  iam.googleapis.com \
+  compute.googleapis.com
+```
 
 ---
 
@@ -23,13 +58,13 @@ Complete guide to setup and configure the Card Approval Prediction MLOps project
 
 | Resource | Value | Description |
 |----------|-------|-------------|
-| **Project ID** | `product-recsys-mlops` | GCP Project |
+| **Project ID** | `card-appoval-prediction-mlops` | GCP Project |
 | **Region** | `us-east1` | Primary region |
 | **Zone** | `us-east1-b` | Primary zone |
 | **GKE Cluster** | `card-approval-prediction-mlops-gke` | Kubernetes cluster |
-| **GCS Bucket** | `product-recsys-mlops-recsys-data` | MLflow artifacts |
-| **Service Account** | `mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com` | Workload Identity |
-| **Artifact Registry** | `us-east1-docker.pkg.dev/product-recsys-mlops/product-recsys-mlops-recsys` | Docker images |
+| **GCS Bucket** | `card-appoval-prediction-data` | MLflow artifacts |
+| **Service Account** | `mlflow-gcs@card-appoval-prediction-mlops.iam.gserviceaccount.com` | Workload Identity |
+| **Artifact Registry** | `us-east1-docker.pkg.dev/card-appoval-prediction-mlops/card-appoval-prediction-mlops-recsys` | Docker images |
 
 ### Key Configuration Files
 
@@ -58,10 +93,10 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 
 **Key variables to configure in `config.env`:**
 ```bash
-GCP_PROJECT_ID=product-recsys-mlops
+GCP_PROJECT_ID=card-appoval-prediction-mlops
 GCP_REGION=us-east1
 GCP_ZONE=us-east1-b
-GCS_BUCKET_NAME=product-recsys-mlops-recsys-data
+GCS_BUCKET_NAME=card-appoval-prediction-data
 POSTGRES_APP_PASSWORD=<strong-password>
 POSTGRES_MLFLOW_PASSWORD=<strong-password>
 GRAFANA_ADMIN_PASSWORD=<strong-password>
@@ -70,8 +105,8 @@ GRAFANA_ADMIN_PASSWORD=<strong-password>
 ## Step 2: Development Environment
 
 ```bash
-# Install MiniConda (if not already installed)
-# https://docs.conda.io/en/latest/miniconda.html#installing
+# Install MiniConda
+https://docs.conda.io/en/latest/miniconda.html#installing
 
 # Create virtual environment
 conda create -n card-approval python=3.11
@@ -92,6 +127,7 @@ pre-commit install
 ```bash
 cd terraform
 terraform init
+terraform plan
 terraform apply
 ```
 
@@ -109,13 +145,47 @@ kubectl get nodes
 
 ---
 
-## Step 5: Build & Push Docker Image
+## Step 5: Setup Workload Identity
+
+Workload Identity allows Kubernetes pods to access GCP services without service account keys.
+
+```bash
+source config.env
+
+# 1. Bind K8s Service Accounts to GCP Service Account
+# For MLflow (card-approval-training namespace)
+gcloud iam service-accounts add-iam-policy-binding ${GCP_MLFLOW_SERVICE_ACCOUNT} \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="serviceAccount:${GCP_PROJECT_ID}.svc.id.goog[card-approval-training/card-approval-training-mlflow-sa]" \
+  --project=${GCP_PROJECT_ID}
+
+# For API (card-approval namespace)
+gcloud iam service-accounts add-iam-policy-binding ${GCP_MLFLOW_SERVICE_ACCOUNT} \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="serviceAccount:${GCP_PROJECT_ID}.svc.id.goog[card-approval/card-approval-api-sa]" \
+  --project=${GCP_PROJECT_ID}
+
+# For Tempo (monitoring namespace)
+gcloud iam service-accounts add-iam-policy-binding ${GCP_MLFLOW_SERVICE_ACCOUNT} \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="serviceAccount:${GCP_PROJECT_ID}.svc.id.goog[monitoring/tempo-sa]" \
+  --project=${GCP_PROJECT_ID}
+
+# 2. Grant bucket-level permissions (required for Tempo)
+gcloud storage buckets add-iam-policy-binding gs://${GCS_BUCKET_NAME} \
+  --member="serviceAccount:${GCP_MLFLOW_SERVICE_ACCOUNT}" \
+  --role="roles/storage.legacyBucketReader"
+```
+
+---
+
+## Step 6: Build & Push Docker Image
 
 ```bash
 source config.env
 
 # Configure Docker for Artifact Registry
-gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev
+gcloud auth configure-docker ${DOCKER_REGISTRY}
 
 # Build and push
 docker build -t card-approval-api:latest .
@@ -134,7 +204,7 @@ Configured in `Jenkinsfile` environment block:
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
-| `PROJECT_ID` | `product-recsys-mlops` | GCP Project |
+| `PROJECT_ID` | `card-appoval-prediction-mlops` | GCP Project |
 | `GKE_CLUSTER` | `card-approval-prediction-mlops-gke` | Target cluster |
 | `GKE_NAMESPACE` | `card-approval` | Deployment namespace |
 | `IMAGE_NAME` | `card-approval-api` | Docker image name |
@@ -168,12 +238,20 @@ api:
     MODEL_NAME: "card_approval_model"
     MODEL_STAGE: "Production"
 ```
+```yaml
+api:
+  tracing:
+    enabled: true
+    serviceName: "card-approval-api"
+    exporterEndpoint: "http://tempo.monitoring:4317"
+    samplingRate: "0.1"
+```
 
 **MLflow Stack** (`helm-charts/card-approval-training/values.yaml`):
 ```yaml
 mlflow:
   gcs:
-    bucket: "product-recsys-mlops-recsys-data"
+    bucket: "card-approval-preidction-data"
     artifactPath: "mlflow-artifacts"
 ```
 
@@ -181,7 +259,4 @@ mlflow:
 
 ## Next Steps
 
-1. **[Helm Deployment](01_Helm_Deployment.md)** - Deploy all services to Kubernetes
-2. **[Model Training](02_MLflow_Training.md)** - Train and register models
-3. **[CI/CD Pipeline](03_CICD_Pipeline.md)** - Setup Jenkins automation
-4. **[Monitoring](05_Monitoring.md)** - Configure Prometheus & Grafana
+1. **[Helm Deployment](01_Helm_Deployment.md)** - Deploy NGINX, MLflow, Monitoring, Tempo

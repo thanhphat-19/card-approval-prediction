@@ -8,6 +8,7 @@ import mlflow
 from loguru import logger
 
 from app.core.config import get_settings
+from app.core.tracing import get_tracer
 from app.utils.gcs import setup_gcs_credentials
 from app.utils.mlflow_helpers import get_latest_model_version, load_model_with_flavor, setup_mlflow_tracking
 
@@ -147,24 +148,41 @@ class ModelService:
         if self.model is None:
             raise RuntimeError("Model not loaded")
 
-        try:
-            prediction = self.model.predict(features)
-            return prediction
-        except Exception as e:
-            logger.error(f"Prediction failed: {e}")
-            raise
+        tracer = get_tracer()
+        with tracer.start_as_current_span("model_inference.predict") as span:
+            span.set_attribute("model.name", self.settings.MODEL_NAME)
+            span.set_attribute("model.version", str(self.version))
+            span.set_attribute("batch_size", len(features))
+
+            try:
+                prediction = self.model.predict(features)
+                span.set_attribute("prediction.success", True)
+                return prediction
+            except Exception as e:
+                span.set_attribute("error", True)
+                span.record_exception(e)
+                logger.error(f"Prediction failed: {e}")
+                raise
 
     def predict_proba(self, features):
         """Get prediction probabilities from loaded model"""
-        if self.sklearn_model is not None and hasattr(self.sklearn_model, "predict_proba"):
-            try:
-                return self.sklearn_model.predict_proba(features)
-            except Exception as e:
-                logger.warning(f"predict_proba failed: {e}")
-                return None
+        tracer = get_tracer()
+        with tracer.start_as_current_span("model_inference.predict_proba") as span:
+            span.set_attribute("has_proba", self.sklearn_model is not None)
 
-        # Fallback: return None if predict_proba not available
-        return None
+            if self.sklearn_model is not None and hasattr(self.sklearn_model, "predict_proba"):
+                try:
+                    proba = self.sklearn_model.predict_proba(features)
+                    span.set_attribute("prediction.success", True)
+                    return proba
+                except Exception as e:
+                    span.set_attribute("error", True)
+                    span.record_exception(e)
+                    logger.warning(f"predict_proba failed: {e}")
+                    return None
+
+            # Fallback: return None if predict_proba not available
+            return None
 
     def get_model_info(self):
         """Get model information"""

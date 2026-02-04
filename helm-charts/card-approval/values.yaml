@@ -86,6 +86,14 @@ api:
     modelName: "card_approval_model"
     modelStage: "Production"
     modelVersion: "latest"
+    modelPath: ""  # Empty = load from MLflow at runtime; "/app/models" = load from embedded model
+
+  # OpenTelemetry Tracing
+  tracing:
+    enabled: true
+    serviceName: "card-approval-api"
+    exporterEndpoint: "http://tempo.monitoring:4317"
+    samplingRate: "1.0"
 
   # MLflow connection
   mlflow:

@@ -51,12 +51,25 @@ spec:
           value: {{ .Values.config.modelStage | quote }}
         - name: MODEL_VERSION
           value: {{ .Values.config.modelVersion | default "latest" | quote }}
+        - name: MODEL_PATH
+          value: {{ .Values.config.modelPath | default "" | quote }}
         - name: MLFLOW_TRACKING_URI
           value: {{ .Values.mlflow.trackingUri | quote }}
         - name: DATABASE_URL
           value: "postgresql://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@{{ .Values.postgres.host }}:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
         - name: REDIS_URL
           value: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}/0"
+        # OpenTelemetry Tracing Configuration
+        {{- if .Values.tracing.enabled }}
+        - name: OTEL_ENABLED
+          value: {{ .Values.tracing.enabled | quote }}
+        - name: OTEL_SERVICE_NAME
+          value: {{ .Values.tracing.serviceName | quote }}
+        - name: OTEL_EXPORTER_ENDPOINT
+          value: {{ .Values.tracing.exporterEndpoint | quote }}
+        - name: OTEL_SAMPLING_RATE
+          value: {{ .Values.tracing.samplingRate | quote }}
+        {{- end }}
         livenessProbe:
           httpGet:
             path: /health

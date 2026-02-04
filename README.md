@@ -4,7 +4,7 @@ End-to-end **MLOps pipeline** for credit card approval prediction using machine 
 
 ## 🏗️ Architecture
 
-![Architecture Diagram](./img/architecture-diagram.png)
+![Architecture Diagram](./img/architecture.png)
 
 ## 📑 Table of Contents
 
@@ -54,7 +54,7 @@ This project is a learning-oriented MLOps playground focused on understanding th
 | **Data Storage** | PostgreSQL, Redis (caching) |
 | **ML & Data Science** | scikit-learn, XGBoost, LightGBM, CatBoost, pandas, numpy |
 | **ML Operations** | MLflow (tracking & registry), Google Cloud Storage (artifacts) |
-| **Monitoring** | Prometheus, Grafana, kube-prometheus-stack |
+| **Monitoring & Observability** | Prometheus, Grafana, Grafana Loki, Grafana Tempo, OpenTelemetry, Promtail, kube-prometheus-stack |
 | **Code Quality** | Black, isort, Flake8, Pylint, pre-commit |
 
 ---
@@ -121,7 +121,11 @@ card-approval-prediction/
 │   └── infrastructure/         # Base charts
 │       ├── postgres/           # PostgreSQL chart
 │       ├── mlflow/             # MLflow server chart
-│       └── redis/              # Redis cache chart
+│       ├── redis/              # Redis cache chart
+│       ├── card-approval-monitoring/ # Grafana stack (Loki, Tempo, Grafana)
+│       ├── monitoring/         # kube-prometheus-stack
+│       ├── tempo/              # Grafana Tempo for tracing
+│       └── nginx-ingress/      # NGINX Ingress controller
 │
 ├── terraform/                  # GCP infrastructure as code
 │   ├── main.tf                 # Main configuration
@@ -148,7 +152,8 @@ card-approval-prediction/
 │   ├── 01_Helm_Deployment.md   # Kubernetes deployment guide
 │   ├── 02_MLflow_Training.md   # Model training guide
 │   ├── 03_CICD_Pipeline.md     # Jenkins CI/CD setup
-│   └── 04_NGINX.md             # NGINX Ingress configuration
+│   ├── 04_NGINX.md             # NGINX Ingress configuration
+│   └── 05_Monitoring.md        # Grafana Stack observability guide
 │
 ├── .github/                    # GitHub configuration
 │   └── workflows/              # GitHub Actions (optional)
@@ -268,6 +273,7 @@ curl -X POST "http://localhost:8000/api/v1/predict" \
 | [02_MLflow_Training.md](docs/02_MLflow_Training.md) | Train and register models |
 | [03_CICD_Pipeline.md](docs/03_CICD_Pipeline.md) | Jenkins CI/CD pipeline setup |
 | [04_NGINX.md](docs/04_NGINX.md) | NGINX Ingress configuration |
+| [05_Monitoring.md](docs/05_Monitoring.md) | Grafana Stack observability (Logs, Metrics, Traces) |
 
 ---
 

@@ -1,0 +1,62 @@
+# Grafana Tempo Configuration
+# Distributed tracing backend for card-approval-prediction
+
+tempo:
+  # Use monolithic mode
+  tempo:
+    storage:
+      trace:
+        backend: gcs
+        gcs:
+          bucket_name: ""  # Set via --set or environment-specific values
+          prefix: "traces/"
+
+    # Receivers - accept traces from applications
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+          http:
+            endpoint: "0.0.0.0:4318"
+
+    # Server configuration
+    server:
+      http_listen_port: 3200
+      grpc_listen_port: 9095
+
+    # Compactor - optimize storage and apply retention
+    compactor:
+      compaction:
+        block_retention: 336h  # 14 days
+
+  # Service configuration
+  service:
+    type: ClusterIP
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Persistence (optional - for WAL)
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClassName: standard-rwo
+
+  # Service account for GCS access via Workload Identity
+  serviceAccount:
+    create: true
+    name: tempo-sa
+    annotations:
+      iam.gke.io/gcp-service-account: ""  # Set via --set or environment-specific values
+
+  # Metrics for self-monitoring
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: "http://kube-prometheus-stack-prometheus.monitoring:9090/api/v1/write"
