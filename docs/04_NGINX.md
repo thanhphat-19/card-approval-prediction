@@ -12,14 +12,47 @@ All public services are exposed through NGINX Ingress Controller with a single L
 
 ---
 
-## Quick Access URLs
+## Architecture
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| **Swagger UI** | `http://<NGINX_IP>/docs` | None |
-| **ReDoc** | `http://<NGINX_IP>/redoc` | None |
-| **Grafana** | `http://<NGINX_IP>/grafana/` | admin / (from secret) |
-| **MLflow** | `http://<NGINX_IP>/mlflow/` | None |
+```
+                                    ┌─────────────────────┐
+                                    │   Internet User     │
+                                    └──────────┬──────────┘
+                                               │
+                                               ▼
+                                    ┌─────────────────────┐
+                                    │  GCP LoadBalancer   │
+                                    │   (External IP)     │
+                                    └──────────┬──────────┘
+                                               │
+                                               ▼
+                         ┌─────────────────────────────────────┐
+                         │    NGINX Ingress Controller         │
+                         │      (ingress-nginx namespace)      │
+                         └──────────┬──────────────────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+                    ▼               ▼               ▼
+         ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+         │  /api/v1/*   │  │  /grafana/   │  │  /mlflow/    │
+         │  /docs       │  │              │  │              │
+         │  /health     │  │              │  │              │
+         └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+                │                 │                 │
+                ▼                 ▼                 ▼
+    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+    │ card-approval   │  │ monitoring-     │  │ card-approval-  │
+    │ -api            │  │ grafana         │  │ training-mlflow │
+    │ (card-approval) │  │ (monitoring)    │  │ (training)      │
+    └─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+**Key Points:**
+- Single external IP for all services
+- Path-based routing to different namespaces
+- TLS termination at NGINX (if configured)
+- Service-to-service communication within cluster
 
 ---
 
@@ -31,31 +64,7 @@ All public services are exposed through NGINX Ingress Controller with a single L
 
 ---
 
-## Step 1: Get NGINX LoadBalancer IP
 
-```bash
-kubectl get svc -n ingress-nginx
-```
-
-**Expected output:**
-```
-NAME                                 TYPE           EXTERNAL-IP     PORT(S)
-nginx-ingress-ingress-nginx-controller             LoadBalancer   34.139.72.244   80:30080/TCP,443:30443/TCP
-```
-
-Or get the IP directly:
-```bash
-export NGINX_IP=$(kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-echo $NGINX_IP
-```
-
-
-Apply Ingress
-
-```bash
-kubectl apply -f manifests/ingress.yaml
-```
----
 
 ## Card Approval API (Swagger)
 
@@ -68,10 +77,6 @@ open http://<NGINX_IP>/docs
 # Example
 open http://34.139.72.244/docs
 ```
-
-
-
----
 
 
 ---
@@ -100,11 +105,6 @@ kubectl get secret monitoring-grafana -n monitoring -o jsonpath="{.data.admin-pa
 | Username | `admin` |
 | Password | (from secret above) |
 
-### Available Dashboards
-
-- **Card Approval API** - Request rates, latency, errors
-- **Kubernetes Cluster** - Node/pod metrics
-- **NGINX Ingress** - Traffic and response codes
 
 ---
 
@@ -118,9 +118,6 @@ open http://<NGINX_IP>/mlflow/
 # Example
 open http://34.139.72.244/mlflow/
 ```
-
-
-
 
 
 ---
@@ -174,19 +171,6 @@ curl -X POST "http://${NGINX_IP}/api/v1/predict" \
 
 ---
 
-## Summary
-
-| Service | URL | Notes |
-|---------|-----|-------|
-| **Swagger UI** | `http://<IP>/docs` | Interactive API documentation |
-| **Health Check** | `http://<IP>/health` | API health status |
-| **Grafana** | `http://<IP>/grafana/` | Dashboards & trace viewer |
-| **MLflow** | `http://<IP>/mlflow/` | Model registry |
-
----
-
----
-
 ## Troubleshooting
 
 ### Common Issues
@@ -226,6 +210,26 @@ kubectl run test-curl --image=curlimages/curl --rm -it --restart=Never -- \
 
 ---
 
+## Summary
+
+Your services are now accessible through NGINX Ingress:
+
+✅ **Single External IP** - All services behind one LoadBalancer
+✅ **Path-based Routing** - Different paths route to different services
+✅ **Swagger Documentation** - Interactive API docs at `/docs`
+✅ **Health Monitoring** - Health endpoint at `/health`
+
+**Access URLs:**
+```bash
+export NGINX_IP=$(kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+echo "API: http://${NGINX_IP}/docs"
+echo "Grafana: http://${NGINX_IP}/grafana/"
+echo "MLflow: http://${NGINX_IP}/mlflow/"
+```
+
+---
+
 ## Next Steps
 
-1. **[View Traces](05_Tracing.md)** - See request traces in Grafana
+1. **[Monitoring](05_Monitoring.md)** - View logs, metrics, and request traces in Grafana

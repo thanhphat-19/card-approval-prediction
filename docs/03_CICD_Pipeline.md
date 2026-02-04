@@ -132,7 +132,7 @@ environment {
         // =============================================================
         // GCP Configuration
         // =============================================================
-        PROJECT_ID    = 'product-recsys-mlops'
+        PROJECT_ID    = 'card-approval-prediction-mlops'
         ZONE          = 'us-east1-b'
         REGION        = 'us-east1'
 
@@ -142,11 +142,11 @@ environment {
 
         // Docker Registry
         REGISTRY      = 'us-east1-docker.pkg.dev'
-        REPOSITORY    = 'product-recsys-mlops/product-recsys-mlops-recsys'
+        REPOSITORY    = 'card-approval-prediction-mlops/card-approval-prediction-mlops-recsys'
         IMAGE_NAME    = 'card-approval-api'
 
         // MLflow Configuration
-        MLFLOW_TRACKING_URI = 'http://34.138.115.181/mlflow'
+        MLFLOW_TRACKING_URI = 'http://<EXTERNAL_INGRESS_IP>/mlflow'
         MODEL_NAME          = 'card_approval_model'
         MODEL_STAGE         = 'Production'
         F1_THRESHOLD        = '0.90'
@@ -236,44 +236,6 @@ Click **Test connection** to verify.
 | Push Image | ✗ | ✓ | Push to Artifact Registry |
 | Deploy | ✗ | ✓ | Helm upgrade to GKE |
 
-### Model Evaluation & Download Stage
-
-The pipeline includes a **Model Evaluation & Download** stage that:
-1. Loads the latest registered model from MLflow
-2. Evaluates against test data (`training/data/processed/X_test.csv`, `y_test.csv`)
-3. Checks if F1 score meets threshold (default: 0.90)
-4. **Fails the build** if model doesn't meet quality requirements
-5. Downloads model artifacts for embedding into Docker image
-6. Extracts model version and run ID for deployment tracking
-
-### Model Loading Strategy
-
-**CI/CD Pipeline (Embedded Model):**
-- Pipeline downloads model from MLflow and embeds it into Docker image at `/app/models`
-- Sets `MODEL_PATH=/app/models` in Dockerfile
-- API loads model from embedded path at startup
-- **Advantage:** Faster startup, no MLflow dependency at runtime
-- **Disadvantage:** Requires rebuild to update model
-
-**Manual Deployment (Runtime Loading):**
-- No model embedded in Docker image
-- Set `api.config.modelPath=""` in Helm values
-- API loads model from MLflow registry at startup
-- **Advantage:** No rebuild needed, always uses latest Production model
-- **Disadvantage:** Slower startup, requires MLflow availability
-
-> **⚠️ Important:** If deploying manually without CI/CD, ensure you set `--set api.config.modelPath=""` to enable runtime MLflow loading. Otherwise, the API will expect an embedded model and fail to start.
-
-**Manual Deployment Example:**
-```bash
-helm upgrade card-approval helm-charts/card-approval \
-  -n card-approval \
-  --set api.config.modelPath="" \  # ← Empty = load from MLflow
-  --set api.image.repository="${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}/${IMAGE_NAME}" \
-  --set api.postgres.password="${POSTGRES_APP_PASSWORD}" \
-  --set postgres.password="${POSTGRES_APP_PASSWORD}"
-```
-
 ---
 
 ## Verify Pipeline
@@ -317,4 +279,25 @@ git push origin feature/test-cicd
 | Pipeline hangs | Check Jenkins logs and GCP service account permissions |
 
 
-```
+
+---
+
+## Summary
+
+Your CI/CD pipeline is now configured with:
+
+✅ **Automated Testing** - Linting and code quality checks on every PR
+✅ **Model Quality Gates** - F1 score threshold validation
+✅ **Security Scanning** - Trivy vulnerability detection
+✅ **Automated Deployment** - Push to GKE on main branch merge
+✅ **GitHub Integration** - PR status updates
+
+**Workflow:**
+- Push to feature branch → Lint + SonarQube
+- Merge to main → Model evaluation → Build → Scan → Push → Deploy
+
+---
+
+## Next Steps
+
+1. **[NGINX Configuration](04_NGINX.md)** - Access deployed services via Ingress

@@ -2,52 +2,18 @@
 
 Complete guide to setup and configure the Card Approval Prediction MLOps project.
 
----
 
-## Deployment Flow Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         PROJECT DEPLOYMENT FLOW                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  1. Setup & Config (this doc)                                               │
-│         ↓                                                                   │
-│  2. Terraform → GKE, GCS, Artifact Registry                                │
-│         ↓                                                                   │
-│  3. Helm Deployments (01_Helm_Deployment.md)                               │
-│      ├── NGINX Ingress                                                      │
-│      ├── MLflow Training Stack                                              │
-│      ├── Monitoring (Prometheus, Grafana, Loki)                            │
-│      └── Tempo (Distributed Tracing)                                       │
-│         ↓                                                                   │
-│  4. Train Model (02_MLflow_Training.md)                                    │
-│         ↓                                                                   │
-│  5. CI/CD Pipeline (03_CICD_Pipeline.md)                                   │
-│      └── Git Push → Jenkins → Build → Deploy API                           │
-│         ↓                                                                   │
-│  6. Access Services (04_NGINX.md)                                          │
-│         ↓                                                                   │
-│  7. View Traces (05_Tracing.md)                                            │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
 
 ## Prerequisites
 
-### Required Tools
-
-| Tool | Version | Installation |
-|------|---------|--------------|
-| `gcloud` CLI | Latest | [Install Guide](https://cloud.google.com/sdk/docs/install) |
-| `kubectl` | 1.28+ | `gcloud components install kubectl` |
-| `helm` | 3.12+ | [Install Guide](https://helm.sh/docs/intro/install/) |
-| `terraform` | 1.6+ | [Install Guide](https://developer.hashicorp.com/terraform/install) |
-| `docker` | 24+ | [Install Guide](https://docs.docker.com/engine/install/) |
-| `ansible` | 2.15+ | `pip install ansible` |
-| `python` | 3.11 | [Install Guide](https://www.python.org/downloads/) |
+### Required Tools:
+- GCP Account with billing enabled
+- `gcloud` CLI installed and authenticated
+- `kubectl` installed
+- `helm` v3+ installed
+- `terraform` v1.6+ installed
+- `ansible` installed (for Jenkins deployment)
+- `docker` installed
 
 ### Verify Installation
 
@@ -92,13 +58,13 @@ gcloud services enable \
 
 | Resource | Value | Description |
 |----------|-------|-------------|
-| **Project ID** | `product-recsys-mlops` | GCP Project |
+| **Project ID** | `card-appoval-prediction-mlops` | GCP Project |
 | **Region** | `us-east1` | Primary region |
 | **Zone** | `us-east1-b` | Primary zone |
 | **GKE Cluster** | `card-approval-prediction-mlops-gke` | Kubernetes cluster |
-| **GCS Bucket** | `product-recsys-mlops-recsys-data` | MLflow artifacts |
-| **Service Account** | `mlflow-gcs@product-recsys-mlops.iam.gserviceaccount.com` | Workload Identity |
-| **Artifact Registry** | `us-east1-docker.pkg.dev/product-recsys-mlops/product-recsys-mlops-recsys` | Docker images |
+| **GCS Bucket** | `card-appoval-prediction-data` | MLflow artifacts |
+| **Service Account** | `mlflow-gcs@card-appoval-prediction-mlops.iam.gserviceaccount.com` | Workload Identity |
+| **Artifact Registry** | `us-east1-docker.pkg.dev/card-appoval-prediction-mlops/card-appoval-prediction-mlops-recsys` | Docker images |
 
 ### Key Configuration Files
 
@@ -127,10 +93,10 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 
 **Key variables to configure in `config.env`:**
 ```bash
-GCP_PROJECT_ID=product-recsys-mlops
+GCP_PROJECT_ID=card-appoval-prediction-mlops
 GCP_REGION=us-east1
 GCP_ZONE=us-east1-b
-GCS_BUCKET_NAME=product-recsys-mlops-recsys-data
+GCS_BUCKET_NAME=card-appoval-prediction-data
 POSTGRES_APP_PASSWORD=<strong-password>
 POSTGRES_MLFLOW_PASSWORD=<strong-password>
 GRAFANA_ADMIN_PASSWORD=<strong-password>
@@ -139,8 +105,8 @@ GRAFANA_ADMIN_PASSWORD=<strong-password>
 ## Step 2: Development Environment
 
 ```bash
-# Install MiniConda (if not already installed)
-# https://docs.conda.io/en/latest/miniconda.html#installing
+# Install MiniConda
+https://docs.conda.io/en/latest/miniconda.html#installing
 
 # Create virtual environment
 conda create -n card-approval python=3.11
@@ -161,6 +127,7 @@ pre-commit install
 ```bash
 cd terraform
 terraform init
+terraform plan
 terraform apply
 ```
 
@@ -237,7 +204,7 @@ Configured in `Jenkinsfile` environment block:
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
-| `PROJECT_ID` | `product-recsys-mlops` | GCP Project |
+| `PROJECT_ID` | `card-appoval-prediction-mlops` | GCP Project |
 | `GKE_CLUSTER` | `card-approval-prediction-mlops-gke` | Target cluster |
 | `GKE_NAMESPACE` | `card-approval` | Deployment namespace |
 | `IMAGE_NAME` | `card-approval-api` | Docker image name |
@@ -271,12 +238,20 @@ api:
     MODEL_NAME: "card_approval_model"
     MODEL_STAGE: "Production"
 ```
+```yaml
+api:
+  tracing:
+    enabled: true
+    serviceName: "card-approval-api"
+    exporterEndpoint: "http://tempo.monitoring:4317"
+    samplingRate: "0.1"
+```
 
 **MLflow Stack** (`helm-charts/card-approval-training/values.yaml`):
 ```yaml
 mlflow:
   gcs:
-    bucket: "product-recsys-mlops-recsys-data"
+    bucket: "card-approval-preidction-data"
     artifactPath: "mlflow-artifacts"
 ```
 
@@ -285,7 +260,3 @@ mlflow:
 ## Next Steps
 
 1. **[Helm Deployment](01_Helm_Deployment.md)** - Deploy NGINX, MLflow, Monitoring, Tempo
-2. **[Model Training](02_MLflow_Training.md)** - Train and register models to MLflow
-3. **[CI/CD Pipeline](03_CICD_Pipeline.md)** - Setup Jenkins for automated deployments
-4. **[NGINX Access](04_NGINX.md)** - Access all services via LoadBalancer
-5. **[Distributed Tracing](05_Tracing.md)** - View traces in Grafana
