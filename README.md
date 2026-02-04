@@ -4,7 +4,7 @@ End-to-end **MLOps pipeline** for credit card approval prediction using machine 
 
 ## 🏗️ Architecture
 
-![Architecture Diagram](./img/architecture-diagram.png)
+![Architecture Diagram](./img/architecture.png)
 
 ## 📑 Table of Contents
 
