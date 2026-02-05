@@ -1,12 +1,12 @@
 apiVersion: v2
-name: recsys-training
-description: MLflow training infrastructure for recommendation system (PostgreSQL + MLflow)
+name: card-approval-training
+description: MLflow training infrastructure for Card Approval Prediction (PostgreSQL + MLflow)
 type: application
 version: 0.1.0
-appVersion: "1.0"
+appVersion: "1.0.0"
 
 maintainers:
-  - name: prod-recsys-team
+  - name: ml-team
 
 # Dependencies
 dependencies:

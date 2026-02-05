@@ -1,4 +1,4 @@
-# Terraform configuration for prod-recsys-project
+# Terraform configuration for card-approval-prediction-project
 
 terraform {
   required_version = ">= 1.6.0"
@@ -17,7 +17,7 @@ provider "google" {
 }
 
 # ============================================
-# GKE Cluster (Standard Mode)
+# GKE Cluster
 # ============================================
 resource "google_container_cluster" "primary" {
   name     = var.cluster_name
@@ -37,7 +37,7 @@ resource "google_container_cluster" "primary" {
 }
 
 # ============================================
-# GKE Node Pool (Standard Mode)
+# GKE Node Pool
 # ============================================
 resource "google_container_node_pool" "primary_nodes" {
   name       = "primary-node-pool"
@@ -104,7 +104,7 @@ resource "google_storage_bucket" "data" {
 }
 
 # ============================================
-# Artifact Registry (for Docker images)
+# Artifact Registry
 # ============================================
 resource "google_artifact_registry_repository" "docker_repo" {
   location      = var.region

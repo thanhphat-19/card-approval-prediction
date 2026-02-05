@@ -1,4 +1,4 @@
-site_name: Product Recommendation System
+site_name: Card Approval Prediction Project
 site_url: https://root/prod-recsys-project/
 theme:
   name: material
@@ -43,4 +43,4 @@ markdown_extensions:
   - attr_list
 
 copyright: |
-  &copy; 2024 <a href="https://github.com/thanhphat"  target="_blank" rel="noopener">Thanh Phat</a>
+  &copy; 2024 <a href="https://github.com/thanhphat-19"  target="_blank" rel="noopener">Thanh Phat</a>

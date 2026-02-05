@@ -8,7 +8,7 @@ from starlette.responses import Response
 # Create a custom registry
 REGISTRY = CollectorRegistry()
 
-# Define metrics - only those actually used in the application
+# Define metrics
 REQUEST_COUNT = Counter(
     "fastapi_requests_total",
     "Total number of requests",

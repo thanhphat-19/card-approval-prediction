@@ -4,6 +4,3 @@ description: MLflow tracking server with GCS artifact storage
 type: application
 version: 0.1.0
 appVersion: "2.9.2"
-
-maintainers:
-  - name: prod-recsys-team

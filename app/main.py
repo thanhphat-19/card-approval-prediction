@@ -28,7 +28,7 @@ async def lifespan(_app: FastAPI):
     # Eagerly load model at startup (instead of lazy loading on first request)
     from app.services.model_service import get_model_service
 
-    logger.info("⏳ Loading model...")
+    logger.info("Loading model...")
     model_service = get_model_service()
     logger.info(f"Model loaded: v{model_service.version} (run_id: {model_service.run_id})")
     logger.info(f"Source: {model_service.get_model_info()['source']}")
@@ -52,8 +52,7 @@ app = FastAPI(
 # Setup distributed tracing (OpenTelemetry)
 setup_tracing(app)
 
-# CORS middleware - configure allowed origins based on environment
-# In production, set CORS_ORIGINS environment variable to restrict origins
+# CORS middleware
 cors_origins = (
     settings.CORS_ORIGINS.split(",") if hasattr(settings, "CORS_ORIGINS") and settings.CORS_ORIGINS else ["*"]
 )

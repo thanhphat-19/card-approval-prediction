@@ -1,9 +1,6 @@
 # =============================================================================
 # Terraform Variables Example
 # =============================================================================
-# Copy this file to terraform.tfvars and fill in your values
-# terraform.tfvars is gitignored and will not be committed
-# =============================================================================
 
 # Required: Your GCP Project ID
 project_id = "your-gcp-project-id"

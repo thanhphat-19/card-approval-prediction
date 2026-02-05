@@ -1,6 +1,7 @@
 # Card Approval API Configuration
 image:
-  repository: us-east1-docker.pkg.dev/product-recsys-mlops/product-recsys-mlops-recsys/card-approval-api
+  # Format: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}
+  repository: ""  # Set via --set or values-secrets.yaml
   tag: "latest"
   pullPolicy: Always
 
@@ -48,7 +49,7 @@ postgres:
   port: 5432
   database: "card_approval_db"
   username: "app_user"
-  password: "app_password_change_me"
+  password: ""  # Set via --set or values-secrets.yaml
 
 # Redis connection
 redis:

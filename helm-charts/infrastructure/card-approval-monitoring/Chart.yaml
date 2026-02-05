@@ -1,5 +1,5 @@
 apiVersion: v2
-name: prometheus
+name: card-approval-monitoring
 description: Prometheus + Grafana + Loki + Alloy monitoring stack for Card Approval API
 type: application
 version: 0.1.0
