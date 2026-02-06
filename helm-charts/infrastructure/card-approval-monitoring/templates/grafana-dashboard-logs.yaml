@@ -35,7 +35,7 @@ data:
         {
           "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
           "id": 1,
-          "title": "📋 Log Overview",
+          "title": "Log Overview",
           "type": "row"
         },
         {
