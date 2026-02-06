@@ -86,7 +86,7 @@ resource "google_container_node_pool" "primary_nodes" {
 
 # Single bucket for all data
 resource "google_storage_bucket" "data" {
-  name          = "${var.project_id}-recsys-data"
+  name          = "${var.project_id}-card-approval-data"
   location      = var.region
   force_destroy = true
 
@@ -108,9 +108,9 @@ resource "google_storage_bucket" "data" {
 # ============================================
 resource "google_artifact_registry_repository" "docker_repo" {
   location      = var.region
-  repository_id = "${var.project_id}-recsys"
+  repository_id = "${var.project_id}-card-approval"
   format        = "DOCKER"
-  description   = "Docker images for recommendation system"
+  description   = "Docker images for card approval prediction system"
 }
 
 # ============================================

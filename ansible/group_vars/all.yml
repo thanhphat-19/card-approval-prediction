@@ -20,7 +20,7 @@ jenkins_home: "/var/jenkins_home"
 
 # Docker Registry (matches config.env)
 docker_registry: "{{ lookup('env', 'DOCKER_REGISTRY') | default(gcp_region + '-docker.pkg.dev', true) }}"
-docker_repository: "{{ lookup('env', 'DOCKER_REPOSITORY') | default(gcp_project_id + '/product-recsys-mlops-recsys', true) }}"
+docker_repository: "{{ lookup('env', 'DOCKER_REPOSITORY') | default(gcp_project_id + '/card-approval-prediction-mlops-card-approval', true) }}"
 image_name: "{{ lookup('env', 'IMAGE_NAME') | default('card-approval-api', true) }}"
 
 # SonarQube Configuration

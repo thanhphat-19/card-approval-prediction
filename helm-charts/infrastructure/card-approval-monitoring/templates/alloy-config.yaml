@@ -21,10 +21,10 @@ data:
     discovery.relabel "filtered_pods" {
       targets = discovery.kubernetes.pods.targets
 
-      // Keep pods from card-approval, monitoring, and recsys-training namespaces
+      // Keep pods from card-approval, monitoring, and card-approval-training namespaces
       rule {
         source_labels = ["__meta_kubernetes_namespace"]
-        regex         = "(card-approval|monitoring|recsys-training)"
+        regex         = "(card-approval|monitoring|card-approval-training)"
         action        = "keep"
       }
 

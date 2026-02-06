@@ -1,5 +1,5 @@
 site_name: Card Approval Prediction Project
-site_url: https://root/prod-recsys-project/
+site_url: https://root/card-approval-prediction-project/
 theme:
   name: material
   features:
