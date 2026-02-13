@@ -142,7 +142,7 @@ environment {
 
         // Docker Registry
         REGISTRY      = 'us-east1-docker.pkg.dev'
-        REPOSITORY    = 'card-approval-prediction-mlops/card-approval-prediction-mlops-recsys'
+        REPOSITORY    = 'card-approval-prediction-mlops/card-approval-prediction-mlops-card-approval'
         IMAGE_NAME    = 'card-approval-api'
 
         // MLflow Configuration

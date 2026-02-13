@@ -1,8 +1,4 @@
 """Prediction API endpoints.
-
-Note: These endpoints use synchronous functions because the underlying
-operations (MLflow, pandas, model inference) are blocking I/O.
-FastAPI will automatically run sync endpoints in a thread pool.
 """
 
 from typing import Dict

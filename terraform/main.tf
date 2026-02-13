@@ -1,4 +1,4 @@
-# Terraform configuration for prod-recsys-project
+# Terraform configuration for card-approval-prediction-project
 
 terraform {
   required_version = ">= 1.6.0"
@@ -17,7 +17,7 @@ provider "google" {
 }
 
 # ============================================
-# GKE Cluster (Standard Mode)
+# GKE Cluster
 # ============================================
 resource "google_container_cluster" "primary" {
   name     = var.cluster_name
@@ -37,7 +37,7 @@ resource "google_container_cluster" "primary" {
 }
 
 # ============================================
-# GKE Node Pool (Standard Mode)
+# GKE Node Pool
 # ============================================
 resource "google_container_node_pool" "primary_nodes" {
   name       = "primary-node-pool"
@@ -86,7 +86,7 @@ resource "google_container_node_pool" "primary_nodes" {
 
 # Single bucket for all data
 resource "google_storage_bucket" "data" {
-  name          = "${var.project_id}-recsys-data"
+  name          = "${var.project_id}-card-approval-data"
   location      = var.region
   force_destroy = true
 
@@ -104,13 +104,13 @@ resource "google_storage_bucket" "data" {
 }
 
 # ============================================
-# Artifact Registry (for Docker images)
+# Artifact Registry
 # ============================================
 resource "google_artifact_registry_repository" "docker_repo" {
   location      = var.region
-  repository_id = "${var.project_id}-recsys"
+  repository_id = "${var.project_id}-card-approval"
   format        = "DOCKER"
-  description   = "Docker images for recommendation system"
+  description   = "Docker images for card approval prediction system"
 }
 
 # ============================================

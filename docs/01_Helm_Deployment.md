@@ -2,15 +2,32 @@
 
 Deploy all infrastructure components to Kubernetes using Helm.
 
+## Chart Structure
+
 ```
 helm-charts/
-├── card-approval/              # API + PostgreSQL + Redis
-├── card-approval-training/     # MLflow + PostgreSQL
-└── infrastructure/
-    ├── nginx-ingress/          # NGINX Ingress Controller
-    ├── card-approval-monitoring/ # Prometheus, Grafana, Loki
-    └── tempo/                  # Distributed Tracing
+├── card-approval/                  # Application stack (umbrella chart)
+│   └── dependencies:
+│       ├── api      → infrastructure/card-approval-api
+│       ├── postgres → infrastructure/postgres
+│       └── redis    → infrastructure/redis
+│
+├── card-approval-training/         # Training stack (umbrella chart)
+│   └── dependencies:
+│       ├── mlflow   → infrastructure/mlflow
+│       └── postgres → infrastructure/postgres
+│
+└── infrastructure/                 # Reusable base charts
+    ├── card-approval-api/          # API deployment templates
+    ├── card-approval-monitoring/   # Prometheus + Grafana + Loki + Alloy
+    ├── mlflow/                     # MLflow tracking server
+    ├── nginx-ingress/              # NGINX Ingress Controller
+    ├── postgres/                   # PostgreSQL database
+    ├── redis/                      # Redis cache
+    └── tempo/                      # Distributed tracing
 ```
+
+**Design principle:** `card-approval/` and `card-approval-training/` are umbrella charts that compose infrastructure charts as dependencies. This enables reuse and consistent configuration.
 
 ---
 

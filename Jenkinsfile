@@ -18,7 +18,7 @@ pipeline {
         // =============================================================
         // GCP Configuration
         // =============================================================
-        PROJECT_ID    = 'product-recsys-mlops'
+        PROJECT_ID    = 'card-approval-prediction-mlops'
         ZONE          = 'us-east1-b'
         REGION        = 'us-east1'
 
@@ -28,7 +28,7 @@ pipeline {
 
         // Docker Registry
         REGISTRY      = 'us-east1-docker.pkg.dev'
-        REPOSITORY    = 'product-recsys-mlops/product-recsys-mlops-recsys'
+        REPOSITORY    = 'card-approval-prediction-mlops/card-approval-prediction-mlops-card-approval'
         IMAGE_NAME    = 'card-approval-api'
 
         // MLflow Configuration

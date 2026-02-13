@@ -44,5 +44,5 @@ serviceAccount:
 ingress:
   enabled: false
   className: "nginx"
-  host: "mlflow.recsys.internal"
+  host: "mlflow.card-approval.internal"
   annotations: {}

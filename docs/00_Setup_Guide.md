@@ -64,7 +64,7 @@ gcloud services enable \
 | **GKE Cluster** | `card-approval-prediction-mlops-gke` | Kubernetes cluster |
 | **GCS Bucket** | `card-appoval-prediction-data` | MLflow artifacts |
 | **Service Account** | `mlflow-gcs@card-appoval-prediction-mlops.iam.gserviceaccount.com` | Workload Identity |
-| **Artifact Registry** | `us-east1-docker.pkg.dev/card-appoval-prediction-mlops/card-appoval-prediction-mlops-recsys` | Docker images |
+| **Artifact Registry** | `us-east1-docker.pkg.dev/card-appoval-prediction-mlops/card-appoval-prediction-mlops-card-approval` | Docker images |
 
 ### Key Configuration Files
 
@@ -251,7 +251,7 @@ api:
 ```yaml
 mlflow:
   gcs:
-    bucket: "card-approval-preidction-data"
+    bucket: "card-approval-prediction-data"
     artifactPath: "mlflow-artifacts"
 ```
 

@@ -20,7 +20,7 @@ RUN mkdir -p /app/reports
 # Copy the rest of the application
 COPY . .
 
-# Copy model artifacts (downloaded during CI/CD pipeline)
+# Copy model artifacts
 # This embeds the model into the image for consistent versioning
 COPY models /app/models
 

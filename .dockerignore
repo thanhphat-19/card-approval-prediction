@@ -7,25 +7,80 @@ __pycache__/
 *.so
 .Python
 *.egg-info/
+*.egg
+MANIFEST
 dist/
 build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+.installed.cfg
+*.manifest
+*.spec
+__pypackages__/
+
+# ============================================
+# Testing & Coverage
+# ============================================
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
+.hypothesis/
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.cache
+cover/
+
+# ============================================
+# Type Checkers & Linters
+# ============================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
 
 # ============================================
 # Environments
 # ============================================
+.env
+.env.local
+.envrc
+.venv
 venv/
 env/
 ENV/
-.env
+env.bak/
+venv.bak/
+.pdm-python
+.pdm-build/
+.pixi/
 
 # ============================================
 # IDEs & Editors
 # ============================================
 .vscode/
 .idea/
+.spyderproject
+.spyproject
+.ropeproject
+.cursorignore
+.cursorindexingignore
+.abstra/
 *.swp
 *.swo
 *~
@@ -41,13 +96,17 @@ Thumbs.db
 # ============================================
 .git/
 .gitignore
+.gitattributes
 
 # ============================================
-# Logs
+# Logs & Reports
 # ============================================
 *.log
 logs/
 app/logs/
+reports/
+crash.log
+.scannerwork/
 
 # ============================================
 # Development & Training Artifacts
@@ -55,48 +114,92 @@ app/logs/
 # MLflow
 mlruns/
 
-# Training data & models
-cap_model/data/raw/
-cap_model/data/processed/*.csv
-cap_model/models/*.pkl
-cap_model/models/*.json
-cap_model/outputs/
-cap_model/notebooks/
+# Training data, models & outputs (use training/ path structure)
+training/data/raw/*.csv
+training/data/raw/*.gz
+training/outputs/
+training/catboost_info/
+training/preprocessors/*.pkl
+training/models/*.txt
+training/models/*.png
+training/models/
+catboost_info/
+models/
+*.csv.gz
 
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+training/notebooks/
+notebooks/
+
+# ============================================
+# Infrastructure as Code
+# ============================================
 # Terraform
 terraform/
 *.tfstate
 *.tfstate.*
 .terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+!terraform.tfvars.example
+
+# Ansible
+ansible/
+*.vault.yml
+vault.yml
+
 
 # ============================================
 # Docker Files (not needed in image)
 # ============================================
 Dockerfile
+Dockerfile.*
 docker-compose.yml
+docker-compose.*.yml
 .dockerignore
-helm-charts/
 
 # ============================================
 # Documentation (not needed in runtime)
 # ============================================
 *.md
 !app/README.md
-!cap_model/README.md
 docs/
+README.md
 
 # ============================================
 # Scripts (not needed in runtime)
 # ============================================
-cap_model/scripts/
-KISS_CLEANUP_SCRIPT.sh
+scripts/
+training/scripts/
+*.backup
 
 # ============================================
-# CI/CD & Secrets
+# Secrets & Sensitive Data
+# ============================================
+secrets/
+config.env
+gcp-key.json
+*-key.json
+credentials.json
+.pypirc
+
+# ============================================
+# CI/CD
 # ============================================
 .tmp-deploy/
-*.json
-!app/**/*.json
 Jenkinsfile
-ansible/
-scripts/
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# ============================================
+# Translations & Misc
+# ============================================
+*.mo
+*.pot
+pip-log.txt
+pip-delete-this-directory.txt
+cython_debug/

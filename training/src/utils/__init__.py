@@ -1,10 +1,4 @@
 """Utilities package
-
-Note: Heavy ML dependencies (model_configs, plotting, dimensionality, resampling)
-are not imported here to avoid loading lightgbm/catboost/xgboost/matplotlib
-at module level. Import them directly when needed:
-    from src.utils.model_configs import get_model_configs
-    from src.utils.plotting import plot_confusion_matrix
 """
 
 from src.utils.encoders import FeatureEncoder

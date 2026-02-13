@@ -19,7 +19,7 @@ fi
 if ! gcloud config get-value project &> /dev/null; then
     echo "Please configure gcloud first:"
     echo "gcloud auth login"
-    echo "gcloud config set project product-recsys-mlops"
+    echo "gcloud config set project card-approval-prediction-mlops"
     exit 1
 fi
 F
