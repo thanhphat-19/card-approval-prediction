@@ -1,6 +1,6 @@
 # Credit Card Approval Prediction - MLOps Project
 
-End-to-end **MLOps pipeline** for credit card approval prediction using machine learning on **Google Cloud Platform**.
+**MLOps pipeline** for credit card approval prediction using machine learning on **Google Cloud Platform**.
 
 ## 🏗️ Architecture
 
